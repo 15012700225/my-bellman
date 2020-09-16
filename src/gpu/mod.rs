@@ -63,15 +63,6 @@ impl <T> Queue<T> {
     }
 }
 
-
-
-#[derive(Debug, Clone)]
-pub struct GpuDeviceInfo {
-    index: usize,
-    device: Device,
-}
-
-
 #[cfg(not(feature = "gpu"))]
 mod nogpu;
 #[cfg(not(feature = "gpu"))]

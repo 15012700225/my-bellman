@@ -6,7 +6,6 @@ use std::collections::HashMap;
 use std::env;
 use super::GPU_NVIDIA_DEVICES;
 use super::GPU_NVIDIA_DEVICES_QUEUE;
-use crate::gpu::GpuDeviceInfo;
 
 pub const GPU_NVIDIA_PLATFORM_NAME: &str = "NVIDIA CUDA";
 // pub const CPU_INTEL_PLATFORM_NAME: &str = "Intel(R) CPU Runtime for OpenCL(TM) Applications";
@@ -91,6 +90,12 @@ pub fn get_memory(d: Device) -> GPUResult<u64> {
         ocl::enums::DeviceInfoResult::GlobalMemSize(sz) => Ok(sz),
         _ => Err(GPUError::Simple("Cannot extract GPU memory!")),
     }
+}
+
+#[derive(Debug, Clone)]
+pub struct GpuDeviceInfo {
+    index: usize,
+    device: Device,
 }
 
 pub fn alloc_gpu_device_index() -> usize {
