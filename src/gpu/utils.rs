@@ -4,6 +4,9 @@ use ocl::{Device, Platform};
 use log::{info, warn};
 use std::collections::HashMap;
 use std::env;
+use super::GPU_NVIDIA_DEVICES;
+use super::GPU_NVIDIA_DEVICES_QUEUE;
+use crate::gpu::GpuDeviceInfo;
 
 pub const GPU_NVIDIA_PLATFORM_NAME: &str = "NVIDIA CUDA";
 // pub const CPU_INTEL_PLATFORM_NAME: &str = "Intel(R) CPU Runtime for OpenCL(TM) Applications";
@@ -88,4 +91,51 @@ pub fn get_memory(d: Device) -> GPUResult<u64> {
         ocl::enums::DeviceInfoResult::GlobalMemSize(sz) => Ok(sz),
         _ => Err(GPUError::Simple("Cannot extract GPU memory!")),
     }
+}
+
+pub fn alloc_gpu_device_index() -> usize {
+    let mut queue = GPU_NVIDIA_DEVICES_QUEUE.lock().unwrap();
+
+    if queue.len() == 0{
+        let devices = &GPU_NVIDIA_DEVICES;
+
+        for i in 0 .. devices.len(){
+            let v =  devices[i];
+
+            queue.push(GpuDeviceInfo{index:i, device: v})
+        }
+    }
+
+    let device_info = queue.pop().unwrap();
+
+    let index = device_info.index;
+
+    queue.push(device_info);
+
+    return index;
+
+    /*let mut queue = BUS_ID_QUEUE.lock().unwrap();
+    if queue.len() == 0{
+        let bus_ids = get_all_bus_ids().unwrap();
+        for v in bus_ids {
+            // do something here
+            queue.push(bus_id_info{bus_id:v, is_occupied:false, tasks:0})
+        }
+    }
+
+    let bus_id_info = queue.pop().unwrap();
+    let bus_id  = bus_id_info.bus_id;
+
+    queue.push(bus_id_info);*/
+
+    /*let mut bus_id = 0;
+    for i in 0 .. vec.len(){
+        if !vec[i].is_occupied{
+            bus_id = vec[i].bus_id;
+            vec[i].is_occupied = true;
+            break;
+        }
+    };
+    (bus_id)
+    */
 }

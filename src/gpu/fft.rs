@@ -7,6 +7,7 @@ use log::info;
 use ocl::{Buffer, MemFlags, ProQue};
 use paired::Engine;
 use std::cmp;
+use super::utils;
 
 // NOTE: Please read `structs.rs` for an explanation for unsafe transmutes of this code!
 
@@ -39,7 +40,10 @@ where
         if devices.is_empty() {
             return Err(GPUError::Simple("No working GPUs found!"));
         }
-        let device = devices[0]; // Select the first device for FFT
+
+        let index = utils::alloc_gpu_device_index();
+
+        let device = devices[index];
         let pq = ProQue::builder().device(device).src(src).dims(n).build()?;
 
         let srcbuff = Buffer::builder()

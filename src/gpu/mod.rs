@@ -1,4 +1,5 @@
 mod error;
+use std::sync::Mutex;
 pub use self::error::*;
 
 #[cfg(feature = "gpu")]
@@ -31,6 +32,46 @@ mod multiexp;
 #[cfg(feature = "gpu")]
 pub use self::multiexp::*;
 
+
+#[derive(Debug)]
+pub struct Queue<T> {
+    qdata: Vec<T>,
+}
+
+impl <T> Queue<T> {
+    fn new() -> Self {
+        Queue{ qdata: Vec::new() }
+    }
+
+    fn push(&mut self, item: T) {
+        self.qdata.push(item);
+    }
+
+    fn pop(&mut self) ->Option<T> {
+        let l = self.qdata.len();
+
+        if l > 0 {
+            let v = self.qdata.remove(0);
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    fn len(&mut self) -> usize{
+        self.qdata.len()
+    }
+}
+
+
+
+#[derive(Debug, Clone)]
+pub struct GpuDeviceInfo {
+    index: usize,
+    device: Device,
+}
+
+
 #[cfg(not(feature = "gpu"))]
 mod nogpu;
 #[cfg(not(feature = "gpu"))]
@@ -40,5 +81,7 @@ pub use self::nogpu::*;
 use ocl::Device;
 #[cfg(feature = "gpu")]
 lazy_static::lazy_static! {
+    //pub static ref GPU_NVIDIA_DEVICES: Vec<Device> = get_devices(GPU_NVIDIA_PLATFORM_NAME).unwrap_or_default();
     pub static ref GPU_NVIDIA_DEVICES: Vec<Device> = get_devices(GPU_NVIDIA_PLATFORM_NAME).unwrap_or_default();
+    pub static ref GPU_NVIDIA_DEVICES_QUEUE:  Mutex<Queue<GpuDeviceInfo>> = Mutex::new(Queue::new());
 }
