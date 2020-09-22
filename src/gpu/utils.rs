@@ -11,9 +11,9 @@ pub const GPU_NVIDIA_PLATFORM_NAME: &str = "NVIDIA CUDA";
 // pub const CPU_INTEL_PLATFORM_NAME: &str = "Intel(R) CPU Runtime for OpenCL(TM) Applications";
 
 pub fn get_devices(platform_name: &str) -> GPUResult<Vec<Device>> {
-    if env::var("BELLMAN_NO_GPU").is_ok() {
-        return Err(GPUError::Simple("GPU accelerator is disabled!"));
-    }
+    //if env::var("BELLMAN_NO_GPU").is_ok() {
+    //    return Err(GPUError::Simple("GPU accelerator is disabled!"));
+    //}
 
     let platform = Platform::list()?.into_iter().find(|&p| match p.name() {
         Ok(p) => p == platform_name,
@@ -114,6 +114,8 @@ pub fn alloc_gpu_device_index() -> usize {
     let device_info = queue.pop().unwrap();
 
     let index = device_info.index;
+
+    log::info!("select gpu index: {}", index);
 
     queue.push(device_info);
 
