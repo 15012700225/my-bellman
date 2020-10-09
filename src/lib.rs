@@ -133,7 +133,7 @@
 //! be separate crates that pull in the dependencies they require.
 
 // Catch documentation errors caused by code changes.
-#![deny(intra_doc_link_resolution_failure)]
+#![deny(broken_intra_doc_links)]
 
 #[cfg(test)]
 #[macro_use]
