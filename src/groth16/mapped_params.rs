@@ -14,7 +14,6 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use super::{ParameterSource, VerifyingKey};
-use rayon::prelude::*;
 
 pub struct MappedParameters<E: Engine> {
     /// The parameter file we're reading from.  

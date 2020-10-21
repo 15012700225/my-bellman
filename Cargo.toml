@@ -13,7 +13,6 @@ edition = "2018"
 [dependencies]
 serde = { version = "1.0", features = ["rc", "derive"] }
 bit-vec = { version = "0.6", features = ["serde"] }
->>>>>>> 5228c10c9421a2adc911e136ec652694ce671821
 blake2s_simd = "0.5"
 ff = { version = "0.2.0", package = "fff" }
 futures = "0.1"
@@ -34,7 +33,6 @@ rayon = "1.3.0"
 memmap = "0.7.0"
 thiserror = "1.0.10"
 ahash = "0.3.4"
-serde = { version = "1.0", features = ["rc", "derive"] }
 
 
 [dev-dependencies]
