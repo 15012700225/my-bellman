@@ -17,6 +17,7 @@ use paired::Engine;
 
 use super::multicore::Worker;
 use super::SynthesisError;
+use serde::{Serialize, Deserialize};
 
 use crate::gpu;
 
@@ -256,6 +257,7 @@ impl<G: CurveProjective> Group<G::Engine> for Point<G> {
     }
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct Scalar<E: ScalarEngine>(pub E::Fr);
 
 impl<E: ScalarEngine> PartialEq for Scalar<E> {
