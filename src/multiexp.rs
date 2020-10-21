@@ -6,6 +6,7 @@ use log::{info, warn};
 use std::io;
 use std::iter;
 use std::sync::Arc;
+use serde::{Serialize, Deserialize};
 
 use super::multicore::Worker;
 use super::SynthesisError;
@@ -111,7 +112,7 @@ impl<'a> QueryDensity for &'a FullDensity {
     }
 }
 
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct DensityTracker {
     pub bv: BitVec,
     pub total_density: usize,
@@ -296,6 +297,54 @@ where
     }
 }
 
+pub fn multiexp_full<Q, D, G, S>(
+    pool: &Worker,
+    bases: S,
+    density_map: D,
+    exponents: Arc<Vec<<<G::Engine as ScalarEngine>::Fr as PrimeField>::Repr>>,
+    kern: &mut Option<gpu::LockedMultiexpKernel<G::Engine>>,
+) -> Box<dyn Future<Item = <G as CurveAffine>::Projective, Error = SynthesisError>>
+where
+    for<'a> &'a Q: QueryDensity,
+    D: Send + Sync + 'static + Clone + AsRef<Q>,
+    G: CurveAffine,
+    G::Engine: paired::Engine,
+    S: SourceBuilder<G>,
+{
+    if let Some(ref mut kern) = kern {
+        if let Ok(p) = kern.with(|k: &mut gpu::MultiexpKernel<G::Engine>| {
+            let (bss, skip) = bases.clone().get();
+            k.multiexp(pool, bss, exponents.clone(), skip, exponents.len())
+        }) {
+            return Box::new(pool.compute(move || Ok(p)));
+        }
+    }
+
+    let c = if exponents.len() < 32 {
+        3u32
+    } else {
+        (f64::from(exponents.len() as u32)).ln().ceil() as u32
+    };
+
+    if let Some(query_size) = density_map.as_ref().get_query_size() {
+        // If the density map has a known query size, it should not be
+        // inconsistent with the number of exponents.
+        assert!(query_size == exponents.len());
+    }
+
+    let future = multiexp_inner(pool, bases, density_map, exponents, 0, c, true);
+    #[cfg(feature = "gpu")]
+    {
+        // Do not give the control back to the caller till the
+        // multiexp is done. We may want to reacquire the GPU again
+        // between the multiexps.
+        let result = future.wait();
+        Box::new(pool.compute(move || result))
+    }
+    #[cfg(not(feature = "gpu"))]
+    future
+}
+
 /// Perform multi-exponentiation. The caller is responsible for ensuring the
 /// query size is the same as the number of exponents.
 pub fn multiexp<Q, D, G, S>(
@@ -314,6 +363,7 @@ where
 {
     if let Some(ref mut kern) = kern {
         if let Ok(p) = kern.with(|k: &mut gpu::MultiexpKernel<G::Engine>| {
+			let start = std::time::Instant::now();
             let mut exps = vec![exponents[0]; exponents.len()];
             let mut n = 0;
             for (&e, d) in exponents.iter().zip(density_map.as_ref().iter()) {
@@ -324,7 +374,9 @@ where
             }
 
             let (bss, skip) = bases.clone().get();
-            k.multiexp(pool, bss, Arc::new(exps.clone()), skip, n)
+			let stop = std::time::Instant::now();
+			info!("density time = {:?}", stop - start);
+            k.multiexp(pool, bss, Arc::new(exps), skip, n)
         }) {
             return Box::new(pool.compute(move || Ok(p)));
         }
