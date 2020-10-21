@@ -115,6 +115,8 @@ pub fn alloc_gpu_device_index() -> usize {
 
     let index = device_info.index;
 
+    log::info!("select gpu index: {}", index);
+
     queue.push(device_info);
 
     return index;
