@@ -15,7 +15,7 @@ impl<E> FFTKernel<E>
 where
     E: ScalarEngine,
 {
-    pub fn create(_: u32, _: bool) -> GPUResult<FFTKernel<E>> {
+    pub fn create(_: u32, _: bool, _: usize) -> GPUResult<FFTKernel<E>> {
         return Err(GPUError::Simple("GPU accelerator is not enabled!"));
     }
 
@@ -61,7 +61,7 @@ macro_rules! locked_kernel {
         where
             E: Engine,
         {
-            pub fn new(_: usize, _: bool) -> $class<E> {
+            pub fn new(_: usize, _: bool, _: usize) -> $class<E> {
                 $class::<E>(PhantomData)
             }
 

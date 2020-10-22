@@ -7,7 +7,6 @@ use log::info;
 use ocl::{Buffer, MemFlags, ProQue};
 use paired::Engine;
 use std::cmp;
-use super::utils;
 
 // NOTE: Please read `structs.rs` for an explanation for unsafe transmutes of this code!
 

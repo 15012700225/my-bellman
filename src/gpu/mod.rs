@@ -1,5 +1,4 @@
 mod error;
-use std::sync::Mutex;
 pub use self::error::*;
 
 #[cfg(feature = "gpu")]
@@ -38,30 +37,6 @@ pub struct Queue<T> {
     qdata: Vec<T>,
 }
 
-impl <T> Queue<T> {
-    fn new() -> Self {
-        Queue{ qdata: Vec::new() }
-    }
-
-    fn push(&mut self, item: T) {
-        self.qdata.push(item);
-    }
-
-    fn pop(&mut self) ->Option<T> {
-        let l = self.qdata.len();
-
-        if l > 0 {
-            let v = self.qdata.remove(0);
-            Some(v)
-        } else {
-            None
-        }
-    }
-
-    fn len(&mut self) -> usize{
-        self.qdata.len()
-    }
-}
 
 #[cfg(not(feature = "gpu"))]
 mod nogpu;

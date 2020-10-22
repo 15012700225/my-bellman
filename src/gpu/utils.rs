@@ -4,7 +4,7 @@ use ocl::{Device, Platform};
 use log::{info, warn};
 use std::collections::HashMap;
 use std::env;
-use super::GPU_NVIDIA_DEVICES;
+
 //use super::GPU_NVIDIA_DEVICES_QUEUE;
 
 pub const GPU_NVIDIA_PLATFORM_NAME: &str = "NVIDIA CUDA";
