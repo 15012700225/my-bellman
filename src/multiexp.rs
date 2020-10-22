@@ -451,7 +451,7 @@ fn test_with_bls12() {
     assert_eq!(naive, fast);
 }
 
-pub fn create_multiexp_kernel<E>(_log_d: usize, priority: bool) -> Option<gpu::MultiexpKernel<E>>
+pub fn create_multiexp_kernel<E>(_log_d: usize, priority: bool, index:usize) -> Option<gpu::MultiexpKernel<E>>
 where
     E: paired::Engine,
 {

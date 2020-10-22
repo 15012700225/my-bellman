@@ -5,7 +5,7 @@ use log::{info, warn};
 use std::collections::HashMap;
 use std::env;
 use super::GPU_NVIDIA_DEVICES;
-use super::GPU_NVIDIA_DEVICES_QUEUE;
+//use super::GPU_NVIDIA_DEVICES_QUEUE;
 
 pub const GPU_NVIDIA_PLATFORM_NAME: &str = "NVIDIA CUDA";
 // pub const CPU_INTEL_PLATFORM_NAME: &str = "Intel(R) CPU Runtime for OpenCL(TM) Applications";
@@ -92,11 +92,19 @@ pub fn get_memory(d: Device) -> GPUResult<u64> {
     }
 }
 
-#[derive(Debug, Clone)]
+/*
+[derive(Debug, Clone)]
 pub struct GpuDeviceInfo {
     index: usize,
     device: Device,
 }
+
+
+pub fn get_device_queue()
+{
+    &GPU_NVIDIA_DEVICES_QUEUE;
+}
+
 
 pub fn alloc_gpu_device_index() -> usize {
     let mut queue = GPU_NVIDIA_DEVICES_QUEUE.lock().unwrap();
@@ -120,29 +128,4 @@ pub fn alloc_gpu_device_index() -> usize {
     queue.push(device_info);
 
     return index;
-
-    /*let mut queue = BUS_ID_QUEUE.lock().unwrap();
-    if queue.len() == 0{
-        let bus_ids = get_all_bus_ids().unwrap();
-        for v in bus_ids {
-            // do something here
-            queue.push(bus_id_info{bus_id:v, is_occupied:false, tasks:0})
-        }
-    }
-
-    let bus_id_info = queue.pop().unwrap();
-    let bus_id  = bus_id_info.bus_id;
-
-    queue.push(bus_id_info);*/
-
-    /*let mut bus_id = 0;
-    for i in 0 .. vec.len(){
-        if !vec[i].is_occupied{
-            bus_id = vec[i].bus_id;
-            vec[i].is_occupied = true;
-            break;
-        }
-    };
-    (bus_id)
-    */
-}
+}*/

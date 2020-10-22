@@ -32,7 +32,7 @@ impl<E> FFTKernel<E>
 where
     E: Engine,
 {
-    pub fn create(n: u32, priority: bool) -> GPUResult<FFTKernel<E>> {
+    pub fn create(n: u32, priority: bool, index:usize) -> GPUResult<FFTKernel<E>> {
         //let lock = locks::GPULock::lock();
 
         let src = sources::kernel::<E>();
@@ -41,7 +41,7 @@ where
             return Err(GPUError::Simple("No working GPUs found!"));
         }
 
-        let index = utils::alloc_gpu_device_index();
+        //let index = utils::alloc_gpu_device_index();
 
         let device = devices[index];
         let pq = ProQue::builder().device(device).src(src).dims(n).build()?;

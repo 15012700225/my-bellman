@@ -77,6 +77,7 @@ pub fn verify_proofs_batch<'a, E: Engine, R: rand::RngCore>(
     rng: &mut R,
     proofs: &[&Proof<E>],
     public_inputs: &[Vec<E::Fr>],
+    gpu_index:usize,
 ) -> Result<bool, SynthesisError>
 where
     <<E as ff::ScalarEngine>::Fr as ff::PrimeField>::Repr: From<<E as ff::ScalarEngine>::Fr>,
@@ -126,7 +127,7 @@ where
         })
         .collect();
 
-    let mut multiexp_kern = get_verifier_kernel(pi_num);
+    let mut multiexp_kern = get_verifier_kernel(pi_num,gpu_index);
 
     // create group element corresponding to public input combination
     // This roughly corresponds to Accum_Gamma in spec
@@ -189,14 +190,14 @@ where
     Ok(E::final_exponentiation(&res).unwrap() == acc_y)
 }
 
-fn get_verifier_kernel<E: Engine>(pi_num: usize) -> Option<LockedMultiexpKernel<E>> {
+fn get_verifier_kernel<E: Engine>(pi_num: usize,gpu_index:usize) -> Option<LockedMultiexpKernel<E>> {
     match &std::env::var("BELLMAN_VERIFIER")
         .unwrap_or("auto".to_string())
         .to_lowercase()[..]
     {
         "gpu" => {
             let log_d = (pi_num as f32).log2().ceil() as usize;
-            Some(LockedMultiexpKernel::<E>::new(log_d, false))
+            Some(LockedMultiexpKernel::<E>::new(log_d, false,gpu_index))
         }
         "cpu" => None,
         "auto" => None,

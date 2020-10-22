@@ -74,5 +74,5 @@ use ocl::Device;
 lazy_static::lazy_static! {
     //pub static ref GPU_NVIDIA_DEVICES: Vec<Device> = get_devices(GPU_NVIDIA_PLATFORM_NAME).unwrap_or_default();
     pub static ref GPU_NVIDIA_DEVICES: Vec<Device> = get_devices(GPU_NVIDIA_PLATFORM_NAME).unwrap_or_default();
-    pub static ref GPU_NVIDIA_DEVICES_QUEUE:  Mutex<Queue<GpuDeviceInfo>> = Mutex::new(Queue::new());
+    //pub static ref GPU_NVIDIA_DEVICES_QUEUE:  Mutex<Queue<GpuDeviceInfo>> = Mutex::new(Queue::new());
 }
