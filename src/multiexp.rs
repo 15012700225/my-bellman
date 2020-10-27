@@ -193,7 +193,7 @@ impl DensityTracker {
     }
 }
 
-fn multiexp_inner<Q, D, G, S>(
+pub fn multiexp_inner<Q, D, G, S>(
     pool: &Worker,
     bases: S,
     density_map: D,
