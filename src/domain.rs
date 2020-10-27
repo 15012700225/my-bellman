@@ -101,6 +101,7 @@ impl<E: Engine, G: Group<E>> EvaluationDomain<E, G> {
     ) -> gpu::GPUResult<()> {
         best_fft(kern, &mut self.coeffs, worker, &self.omegainv, self.exp)?;
 
+		let start = std::time::Instant::now();
         worker.scope(self.coeffs.len(), |scope, chunk| {
             let minv = self.minv;
 
@@ -112,6 +113,8 @@ impl<E: Engine, G: Group<E>> EvaluationDomain<E, G> {
                 });
             }
         });
+		let end = std::time::Instant::now();
+		info!("CPU time: {:?}", end - start);
 
         Ok(())
     }
@@ -135,7 +138,10 @@ impl<E: Engine, G: Group<E>> EvaluationDomain<E, G> {
         worker: &Worker,
         kern: &mut Option<gpu::LockedFFTKernel<E>>,
     ) -> gpu::GPUResult<()> {
+		let start = std::time::Instant::now();
         self.distribute_powers(worker, E::Fr::multiplicative_generator());
+		let end = std::time::Instant::now();
+		info!("coset_fft CPU time: {:?}", end - start);
         self.fft(worker, kern)?;
         Ok(())
     }
@@ -147,7 +153,10 @@ impl<E: Engine, G: Group<E>> EvaluationDomain<E, G> {
     ) -> gpu::GPUResult<()> {
         let geninv = self.geninv;
         self.ifft(worker, kern)?;
+		let start = std::time::Instant::now();
         self.distribute_powers(worker, geninv);
+		let end = std::time::Instant::now();
+		info!("icoset_fft CPU time: {:?}", end - start);
         Ok(())
     }
 
