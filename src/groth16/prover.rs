@@ -1,9 +1,8 @@
 use std::sync::Arc;
 
+use crate::bls::Engine;
 use ff::{Field, PrimeField};
-use futures::Future;
 use groupy::{CurveAffine, CurveProjective};
-use paired::Engine;
 use rand_core::RngCore;
 use rayon::prelude::*;
 
@@ -572,7 +571,7 @@ where
 mod tests {
     use super::*;
 
-    use paired::bls12_381::{Bls12, Fr};
+    use crate::bls::{Bls12, Fr};
     use rand::Rng;
     use rand_core::SeedableRng;
     use rand_xorshift::XorShiftRng;

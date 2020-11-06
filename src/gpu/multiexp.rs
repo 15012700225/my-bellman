@@ -4,15 +4,13 @@ use super::sources;
 use super::structs;
 use super::utils;
 use super::GPU_NVIDIA_DEVICES;
+use crate::bls::Engine;
 use crate::multicore::Worker;
 use crate::multiexp::{multiexp as cpu_multiexp, FullDensity};
-use crossbeam::thread;
 use ff::{PrimeField, ScalarEngine};
-use futures::Future;
 use groupy::{CurveAffine, CurveProjective};
 use log::{error, info};
 use ocl::{Buffer, Device, MemFlags, ProQue};
-use paired::Engine;
 use std::sync::Arc;
 
 // NOTE: Please read `structs.rs` for an explanation for unsafe transmutes of this code!
@@ -98,11 +96,15 @@ where
     E: Engine,
 {
     let aff_size = std::mem::size_of::<E::G1Affine>() + std::mem::size_of::<E::G2Affine>();
-    let exp_size = std::mem::size_of::<E::Fr>();
+    let exp_size = exp_size::<E>();
     let proj_size = std::mem::size_of::<E::G1>() + std::mem::size_of::<E::G2>();
     ((((mem as f64) * (1f64 - MEMORY_PADDING)) as usize)
         - (2 * core_count * ((1 << MAX_WINDOW_SIZE) + 1) * proj_size))
         / (aff_size + exp_size)
+}
+
+fn exp_size<E: Engine>() -> usize {
+    std::mem::size_of::<<E::Fr as ff::PrimeField>::Repr>()
 }
 
 impl<E> SingleMultiexpKernel<E>
@@ -113,7 +115,7 @@ where
         let src = sources::kernel::<E>();
         let pq = ProQue::builder().device(d).src(src).dims(1).build()?;
 
-        let exp_bits = std::mem::size_of::<E::Fr>() * 8;
+        let exp_bits = exp_size::<E>() * 8;
         let core_count = utils::get_core_count(d)?;
         let mem = utils::get_memory(d)?;
         let max_n = calc_chunk_size::<E>(mem, core_count);
@@ -191,7 +193,7 @@ where
             return Err(GPUError::GPUTaken);
         }
 
-        let exp_bits = std::mem::size_of::<E::Fr>() * 8;
+        let exp_bits = exp_size::<E>() * 8;
         let window_size = calc_window_size(n as usize, exp_bits, self.core_count);
         let num_windows = ((exp_bits as f64) / (window_size as f64)).ceil() as usize;
         let num_groups = calc_num_groups(self.core_count, num_windows);
@@ -341,7 +343,7 @@ where
     ) -> GPUResult<<G as CurveAffine>::Projective>
     where
         G: CurveAffine,
-        <G as groupy::CurveAffine>::Engine: paired::Engine,
+        <G as groupy::CurveAffine>::Engine: crate::bls::Engine,
     {
         let num_devices = self.kernels.len();
         // Bases are skipped by `self.1` elements, when converted from (Arc<Vec<G>>, usize) to Source
@@ -356,27 +358,29 @@ where
 
         let chunk_size = ((n as f64) / (num_devices as f64)).ceil() as usize;
 
-        match thread::scope(|s| -> Result<<G as CurveAffine>::Projective, GPUError> {
+        crate::multicore::THREAD_POOL.install(|| {
+            use rayon::prelude::*;
+
             let mut acc = <G as CurveAffine>::Projective::zero();
-            let mut threads = Vec::new();
-            if n > 0 {
-                for ((bases, exps), kern) in bases
-                    .chunks(chunk_size)
-                    .zip(exps.chunks(chunk_size))
-                    .zip(self.kernels.iter_mut())
-                {
-                    threads.push(s.spawn(
-                        move |_| -> Result<<G as CurveAffine>::Projective, GPUError> {
-                            let mut acc = <G as CurveAffine>::Projective::zero();
-                            for (bases, exps) in bases.chunks(kern.n).zip(exps.chunks(kern.n)) {
-                                let result = kern.multiexp(bases, exps, bases.len())?;
-                                acc.add_assign(&result);
-                            }
-                            Ok(acc)
-                        },
-                    ));
-                }
-            }
+
+            let results = if n > 0 {
+                bases
+                    .par_chunks(chunk_size)
+                    .zip(exps.par_chunks(chunk_size))
+                    .zip(self.kernels.par_iter_mut())
+                    .map(|((bases, exps), kern)| -> Result<<G as CurveAffine>::Projective, GPUError> {
+                        let mut acc = <G as CurveAffine>::Projective::zero();
+                        for (bases, exps) in bases.chunks(kern.n).zip(exps.chunks(kern.n)) {
+                            let result = kern.multiexp(bases, exps, bases.len())?;
+                            acc.add_assign(&result);
+                        }
+
+                        Ok(acc)
+                    })
+                    .collect::<Vec<_>>()
+            } else {
+                Vec::new()
+            };
 
             let cpu_acc = cpu_multiexp(
                 &pool,
@@ -386,20 +390,12 @@ where
                 &mut None,
             );
 
-            let mut results = vec![];
-            for t in threads {
-                results.push(t.join());
-            }
             for r in results {
-                acc.add_assign(&r??);
+                acc.add_assign(&r?);
             }
 
             acc.add_assign(&cpu_acc.wait().unwrap());
-
             Ok(acc)
-        }) {
-            Ok(res) => res,
-            Err(e) => Err(GPUError::from(e)),
-        }
+        })
     }
 }
