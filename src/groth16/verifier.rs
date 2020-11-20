@@ -103,6 +103,7 @@ pub fn verify_proofs_batch<'a, E: Engine, R: rand::RngCore>(
     rng: &mut R,
     proofs: &[&Proof<E>],
     public_inputs: &[Vec<E::Fr>],
+    _gpu_index:usize,
 ) -> Result<bool, SynthesisError>
 where
     <<E as ff::ScalarEngine>::Fr as ff::PrimeField>::Repr: From<<E as ff::ScalarEngine>::Fr>,

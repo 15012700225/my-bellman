@@ -262,6 +262,7 @@ mod test_with_bls12_381 {
                 },
                 &params,
                 rng,
+                0
             )
             .unwrap();
 

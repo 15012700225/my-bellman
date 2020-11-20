@@ -207,7 +207,7 @@ fn test_mimc() {
             };
 
             // Create a groth16 proof with our parameters.
-            let proof = create_random_proof(c, &params, rng).unwrap();
+            let proof = create_random_proof(c, &params, rng,0).unwrap();
 
             proof.write(&mut proof_vec).unwrap();
         }
@@ -239,7 +239,7 @@ fn test_mimc() {
         };
 
         // Create a groth16 proof with our parameters.
-        let proofs = create_random_proof_batch(vec![c; SAMPLES as usize], &params, rng).unwrap();
+        let proofs = create_random_proof_batch(vec![c; SAMPLES as usize], &params, rng, 0).unwrap();
         assert_eq!(proofs.len(), 50);
     }
 
@@ -267,7 +267,7 @@ fn test_mimc() {
 
         let start = Instant::now();
         let proofs: Vec<_> = proofs.iter().collect();
-        let valid = verify_proofs_batch(&pvk, &mut rand::rngs::OsRng, &proofs, &images).unwrap();
+        let valid = verify_proofs_batch(&pvk, &mut rand::rngs::OsRng, &proofs, &images,0).unwrap();
         println!(
             "Batch verification of {} proofs: {:04}s ({:04}s/proof)",
             proofs.len(),
@@ -293,7 +293,7 @@ fn test_mimc() {
         }
         let bad_proofs_ref = bad_proofs.iter().collect::<Vec<_>>();
         assert!(
-            !verify_proofs_batch(&pvk, &mut rand::rngs::OsRng, &bad_proofs_ref[..], &images)
+            !verify_proofs_batch(&pvk, &mut rand::rngs::OsRng, &bad_proofs_ref[..], &images,0)
                 .unwrap()
         );
     }

@@ -27,7 +27,7 @@ impl<E> FFTKernel<E>
 where
     E: Engine,
 {
-    pub fn create(priority: bool) -> GPUResult<FFTKernel<E>> {
+    pub fn create(priority: bool, index:usize) -> GPUResult<FFTKernel<E>> {
         let lock = locks::GPULock::lock();
 
         let devices = opencl::Device::all()?;
@@ -36,7 +36,7 @@ where
         }
 
         // Select the first device for FFT
-        let device = devices[0].clone();
+        let device = devices[index].clone();
 
         let src = sources::kernel::<E>(device.brand() == opencl::Brand::Nvidia);
 

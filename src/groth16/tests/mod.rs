@@ -294,7 +294,7 @@ fn test_xordemo() {
             _marker: PhantomData,
         };
 
-        create_proof(c, &params, r, s).unwrap()
+        create_proof(c, &params, r, s, 0).unwrap()
     };
 
     // A(x) =
@@ -422,14 +422,15 @@ fn test_create_batch_single() {
         b: Some(false),
         _marker: PhantomData,
     };
-    let proof_single_1 = create_proof(c.clone(), &params, r1, s1).unwrap();
-    let proof_single_2 = create_proof(c.clone(), &params, r2, s2).unwrap();
+    let proof_single_1 = create_proof(c.clone(), &params, r1, s1,0).unwrap();
+    let proof_single_2 = create_proof(c.clone(), &params, r2, s2,0).unwrap();
 
     let proof_batch = create_proof_batch(
         vec![c.clone(), c.clone()],
         &params,
         vec![r1, r2],
         vec![s1, s2],
+        0,
     )
     .unwrap();
 
@@ -476,7 +477,7 @@ fn test_verify_random_single() {
             _marker: PhantomData,
         };
 
-        let proof = create_random_proof(c.clone(), &params, &mut rng).unwrap();
+        let proof = create_random_proof(c.clone(), &params, &mut rng,0).unwrap();
 
         // real proofs
         assert!(verify_proof(&pvk, &proof, &[Fr::one()]).unwrap());
@@ -559,12 +560,12 @@ fn test_verify_random_batch() {
         };
 
         let proof =
-            create_random_proof_batch(vec![c.clone(), c.clone(), c.clone()], &params, &mut rng)
+            create_random_proof_batch(vec![c.clone(), c.clone(), c.clone()], &params, &mut rng,0)
                 .unwrap();
 
         // real proofs
         assert!(
-            verify_proofs_batch(&pvk, &mut rng, &[&proof[0], &proof[1], &proof[2]], &inputs)
+            verify_proofs_batch(&pvk, &mut rng, &[&proof[0], &proof[1], &proof[2]], &inputs,0)
                 .unwrap()
         );
 
@@ -576,6 +577,7 @@ fn test_verify_random_batch() {
                 &mut rng,
                 &[&proof[0], &proof[1], &proof[2]],
                 &[vec![r], vec![Fr::one()], vec![Fr::one()]],
+                0,
             )
             .unwrap());
         }
@@ -588,7 +590,7 @@ fn test_verify_random_batch() {
                 &pvk,
                 &mut rng,
                 &[&fake_proof[0], &fake_proof[1], &fake_proof[2]],
-                &inputs
+                &inputs,0
             )
             .unwrap());
         }
@@ -600,7 +602,7 @@ fn test_verify_random_batch() {
                 &pvk,
                 &mut rng,
                 &[&fake_proof[0], &fake_proof[1], &fake_proof[2]],
-                &inputs
+                &inputs,0
             )
             .unwrap());
         }
@@ -612,7 +614,7 @@ fn test_verify_random_batch() {
                 &pvk,
                 &mut rng,
                 &[&fake_proof[0], &fake_proof[1], &fake_proof[2]],
-                &inputs
+                &inputs,0
             )
             .unwrap());
         }
@@ -626,7 +628,7 @@ fn test_verify_random_batch() {
                 &pvk,
                 &mut rng,
                 &[&fake_proof[0], &fake_proof[1], &fake_proof[2]],
-                &inputs
+                &inputs,0
             )
             .unwrap());
         }
@@ -654,7 +656,7 @@ fn test_verify_random_batch() {
                 &pvk,
                 &mut rng,
                 &[&random_proof[0], &random_proof[1], &random_proof[2],],
-                &inputs
+                &inputs,0
             )
             .unwrap());
         }
