@@ -32,7 +32,7 @@ impl<E> MultiexpKernel<E>
 where
     E: ScalarEngine,
 {
-    pub fn create(_: bool) -> GPUResult<MultiexpKernel<E>> {
+    pub fn create(_: bool,index:usize) -> GPUResult<MultiexpKernel<E>> {
         return Err(GPUError::GPUDisabled);
     }
 

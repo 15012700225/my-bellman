@@ -79,9 +79,15 @@ pub fn dump_device_list() {
     }
 }
 
+pub fn gpu_count() -> usize {
+    opencl::Device::all().unwrap().len()
+}
+
 #[cfg(feature = "gpu")]
 #[test]
 pub fn test_list_devices() {
     let _ = env_logger::try_init();
     dump_device_list();
 }
+
+

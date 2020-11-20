@@ -220,7 +220,7 @@ impl<E> MultiexpKernel<E>
 where
     E: Engine,
 {
-    pub fn create(priority: bool) -> GPUResult<MultiexpKernel<E>> {
+    pub fn create(priority: bool, _index:usize) -> GPUResult<MultiexpKernel<E>> {
         let lock = locks::GPULock::lock();
 
         let devices = opencl::Device::all()?;
