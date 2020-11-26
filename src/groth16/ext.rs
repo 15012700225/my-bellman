@@ -9,14 +9,20 @@ pub fn create_proof<E, C, P: ParameterSource<E>>(
     params: P,
     r: E::Fr,
     s: E::Fr,
-    gpu_index:usize,
+    gpu_index: usize,
 ) -> Result<Proof<E>, SynthesisError>
 where
     E: Engine,
     C: Circuit<E> + Send,
 {
-    let proofs =
-        create_proof_batch_priority::<E, C, P>(vec![circuit], params, vec![r], vec![s], false,gpu_index)?;
+    let proofs = create_proof_batch_priority::<E, C, P>(
+        vec![circuit],
+        params,
+        vec![r],
+        vec![s],
+        false,
+        gpu_index,
+    )?;
     Ok(proofs.into_iter().next().unwrap())
 }
 
@@ -24,15 +30,20 @@ pub fn create_random_proof<E, C, R, P: ParameterSource<E>>(
     circuit: C,
     params: P,
     rng: &mut R,
-    gpu_index:usize,
+    gpu_index: usize,
 ) -> Result<Proof<E>, SynthesisError>
 where
     E: Engine,
     C: Circuit<E> + Send,
     R: RngCore,
 {
-    let proofs =
-        create_random_proof_batch_priority::<E, C, R, P>(vec![circuit], params, rng, false,gpu_index)?;
+    let proofs = create_random_proof_batch_priority::<E, C, R, P>(
+        vec![circuit],
+        params,
+        rng,
+        false,
+        gpu_index,
+    )?;
     Ok(proofs.into_iter().next().unwrap())
 }
 
@@ -41,7 +52,7 @@ pub fn create_proof_batch<E, C, P: ParameterSource<E>>(
     params: P,
     r: Vec<E::Fr>,
     s: Vec<E::Fr>,
-    gpu_index:usize,
+    gpu_index: usize,
 ) -> Result<Vec<Proof<E>>, SynthesisError>
 where
     E: Engine,
@@ -54,14 +65,14 @@ pub fn create_random_proof_batch<E, C, R, P: ParameterSource<E>>(
     circuits: Vec<C>,
     params: P,
     rng: &mut R,
-    gpu_index:usize,
+    gpu_index: usize,
 ) -> Result<Vec<Proof<E>>, SynthesisError>
 where
     E: Engine,
     C: Circuit<E> + Send,
     R: RngCore,
 {
-    create_random_proof_batch_priority::<E, C, R, P>(circuits, params, rng, false,gpu_index)
+    create_random_proof_batch_priority::<E, C, R, P>(circuits, params, rng, false, gpu_index)
 }
 
 pub fn create_proof_in_priority<E, C, P: ParameterSource<E>>(
@@ -69,14 +80,20 @@ pub fn create_proof_in_priority<E, C, P: ParameterSource<E>>(
     params: P,
     r: E::Fr,
     s: E::Fr,
-    gpu_index:usize,
+    gpu_index: usize,
 ) -> Result<Proof<E>, SynthesisError>
 where
     E: Engine,
     C: Circuit<E> + Send,
 {
-    let proofs =
-        create_proof_batch_priority::<E, C, P>(vec![circuit], params, vec![r], vec![s], true,gpu_index)?;
+    let proofs = create_proof_batch_priority::<E, C, P>(
+        vec![circuit],
+        params,
+        vec![r],
+        vec![s],
+        true,
+        gpu_index,
+    )?;
     Ok(proofs.into_iter().next().unwrap())
 }
 
@@ -91,8 +108,13 @@ where
     C: Circuit<E> + Send,
     R: RngCore,
 {
-    let proofs =
-        create_random_proof_batch_priority::<E, C, R, P>(vec![circuit], params, rng, true, gpu_index)?;
+    let proofs = create_random_proof_batch_priority::<E, C, R, P>(
+        vec![circuit],
+        params,
+        rng,
+        true,
+        gpu_index,
+    )?;
     Ok(proofs.into_iter().next().unwrap())
 }
 
@@ -101,7 +123,7 @@ pub fn create_proof_batch_in_priority<E, C, P: ParameterSource<E>>(
     params: P,
     r: Vec<E::Fr>,
     s: Vec<E::Fr>,
-    gpu_index:usize,
+    gpu_index: usize,
 ) -> Result<Vec<Proof<E>>, SynthesisError>
 where
     E: Engine,
@@ -114,7 +136,7 @@ pub fn create_random_proof_batch_in_priority<E, C, R, P: ParameterSource<E>>(
     circuits: Vec<C>,
     params: P,
     rng: &mut R,
-    gpu_index:usize,
+    gpu_index: usize,
 ) -> Result<Vec<Proof<E>>, SynthesisError>
 where
     E: Engine,

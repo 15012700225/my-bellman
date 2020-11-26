@@ -58,20 +58,20 @@ fn eval<E: Engine>(
     acc
 }
 
-struct ProvingAssignment<E: Engine> {
+pub struct ProvingAssignment<E: Engine> {
     // Density of queries
-    a_aux_density: DensityTracker,
-    b_input_density: DensityTracker,
-    b_aux_density: DensityTracker,
+    pub a_aux_density: DensityTracker,
+    pub b_input_density: DensityTracker,
+    pub b_aux_density: DensityTracker,
 
     // Evaluations of A, B, C polynomials
-    a: Vec<Scalar<E>>,
-    b: Vec<Scalar<E>>,
-    c: Vec<Scalar<E>>,
+    pub a: Vec<Scalar<E>>,
+    pub b: Vec<Scalar<E>>,
+    pub c: Vec<Scalar<E>>,
 
     // Assignments of variables
-    input_assignment: Vec<E::Fr>,
-    aux_assignment: Vec<E::Fr>,
+    pub input_assignment: Vec<E::Fr>,
+    pub aux_assignment: Vec<E::Fr>,
 }
 use std::fmt;
 
