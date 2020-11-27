@@ -9,8 +9,8 @@ use super::Assignment;
 use super::boolean::{self, AllocatedBit, Boolean};
 
 pub struct AllocatedNum<E: ScalarEngine> {
-    value: Option<E::Fr>,
-    variable: Variable,
+    pub value: Option<E::Fr>,
+    pub variable: Variable,
 }
 
 impl<E: ScalarEngine> Clone for AllocatedNum<E> {
