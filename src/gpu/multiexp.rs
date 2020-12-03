@@ -17,18 +17,19 @@ const LOCAL_WORK_SIZE: usize = 256;
 const MEMORY_PADDING: f64 = 0.2f64; // Let 20% of GPU memory be free
 
 pub fn get_cpu_utilization() -> f64 {
-    use std::env;
-    env::var("BELLMAN_CPU_UTILIZATION")
-        .and_then(|v| match v.parse() {
-            Ok(val) => Ok(val),
-            Err(_) => {
-                error!("Invalid BELLMAN_CPU_UTILIZATION! Defaulting to 0...");
-                Ok(0f64)
-            }
-        })
-        .unwrap_or(0f64)
-        .max(0f64)
-        .min(1f64)
+    // use std::env;
+	0f64
+    // env::var("BELLMAN_CPU_UTILIZATION")
+    //     .and_then(|v| match v.parse() {
+    //         Ok(val) => Ok(val),
+    //         Err(_) => {
+    //             error!("Invalid BELLMAN_CPU_UTILIZATION! Defaulting to 0...");
+    //             Ok(0f64)
+    //         }
+    //     })
+    //     .unwrap_or(0f64)
+    //     .max(0f64)
+    //     .min(1f64)
 }
 
 // Multiexp kernel for a single GPU
