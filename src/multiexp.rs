@@ -117,6 +117,14 @@ pub struct DensityTracker {
     pub total_density: usize,
 }
 
+
+impl Default for DensityTracker {
+	fn default() -> Self {
+		Self::new()
+	}
+}
+
+
 impl<'a> QueryDensity for &'a DensityTracker {
     type Iter = bit_vec::Iter<'a>;
 
