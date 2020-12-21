@@ -32,6 +32,7 @@ lazy_static! {
 #[derive(Clone)]
 pub struct Worker {}
 
+
 impl Worker {
     pub fn new() -> Worker {
         Worker {}

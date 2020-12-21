@@ -117,13 +117,11 @@ pub struct DensityTracker {
     pub total_density: usize,
 }
 
-
 impl Default for DensityTracker {
-	fn default() -> Self {
-		Self::new()
-	}
+    fn default() -> Self {
+        Self::new()
+    }
 }
-
 
 impl<'a> QueryDensity for &'a DensityTracker {
     type Iter = bit_vec::Iter<'a>;
@@ -325,9 +323,11 @@ where
         assert!(query_size == exponents.len());
     }
 
-    pool.compute(move || multiexp_inner(bases, density_map, exponents, c))
+    Waiter::done(
+        pool.compute(move || multiexp_inner(bases, density_map, exponents, c))
+            .wait(),
+    )
 }
-
 
 pub fn multiexp_precompute<Q, D, G, S>(
     pool: &Worker,
@@ -367,16 +367,8 @@ where
 
     let result = pool.compute(move || multiexp_inner(bases, density_map, exponents, c));
 
-    #[cfg(feature = "gpu")]
-    {
-        // Do not give the control back to the caller till the
-        // multiexp is done. We may want to reacquire the GPU again
-        // between the multiexps.
-        let result = result.wait();
-        Waiter::done(result)
-    }
-    #[cfg(not(feature = "gpu"))]
-    result
+    let result = result.wait();
+    Waiter::done(result)
 }
 
 /// Perform multi-exponentiation. The caller is responsible for ensuring the
@@ -427,16 +419,8 @@ where
 
     let result = pool.compute(move || multiexp_inner(bases, density_map, exponents, c));
 
-    #[cfg(feature = "gpu")]
-    {
-        // Do not give the control back to the caller till the
-        // multiexp is done. We may want to reacquire the GPU again
-        // between the multiexps.
-        let result = result.wait();
-        Waiter::done(result)
-    }
-    #[cfg(not(feature = "gpu"))]
-    result
+    let result = result.wait();
+    Waiter::done(result)
 }
 
 #[cfg(any(feature = "pairing", feature = "blst"))]
