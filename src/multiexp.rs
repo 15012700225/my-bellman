@@ -198,7 +198,7 @@ impl DensityTracker {
     }
 }
 
-fn multiexp_inner<Q, D, G, S>(
+pub fn multiexp_inner<Q, D, G, S>(
     bases: S,
     density_map: D,
     exponents: Arc<Vec<<<G::Engine as ScalarEngine>::Fr as PrimeField>::Repr>>,

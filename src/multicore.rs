@@ -29,7 +29,7 @@ lazy_static! {
         .unwrap();
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default, Copy)]
 pub struct Worker {}
 
 
@@ -38,11 +38,11 @@ impl Worker {
         Worker {}
     }
 
-    pub fn log_num_cpus(&self) -> u32 {
+    pub fn log_num_cpus(self) -> u32 {
         log2_floor(*NUM_CPUS)
     }
 
-    pub fn compute<F, R>(&self, f: F) -> Waiter<R>
+    pub fn compute<F, R>(self, f: F) -> Waiter<R>
     where
         F: FnOnce() -> R + Send + 'static,
         R: Send + 'static,
@@ -56,7 +56,7 @@ impl Worker {
         Waiter { receiver }
     }
 
-    pub fn scope<'a, F, R>(&self, elements: usize, f: F) -> R
+    pub fn scope<'a, F, R>(self, elements: usize, f: F) -> R
     where
         F: FnOnce(&rayon::Scope<'a>, usize) -> R + Send,
         R: Send,
