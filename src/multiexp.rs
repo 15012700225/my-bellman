@@ -6,6 +6,7 @@ use rayon::prelude::*;
 use std::io;
 use std::iter;
 use std::sync::Arc;
+use serde::{Serialize, Deserialize};
 
 use super::multicore::{Waiter, Worker};
 use super::SynthesisError;
@@ -111,7 +112,7 @@ impl<'a> QueryDensity for &'a FullDensity {
     }
 }
 
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct DensityTracker {
     pub bv: BitVec,
     pub total_density: usize,
