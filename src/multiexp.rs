@@ -111,7 +111,7 @@ impl<'a> QueryDensity for &'a FullDensity {
     }
 }
 
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Default, Clone, PartialEq, Eq, Debug)]
 pub struct DensityTracker {
     pub bv: BitVec,
     pub total_density: usize,
@@ -341,6 +341,57 @@ where
     #[cfg(not(feature = "gpu"))]
     result
 }
+pub fn multiexp_precompute<Q, D, G, S>(
+    pool: &Worker,
+    bases: S,
+    density_map: D,
+    exponents: Arc<Vec<<<G::Engine as ScalarEngine>::Fr as PrimeField>::Repr>>,
+    kern: &mut Option<gpu::LockedMultiexpKernel<G::Engine>>,
+    exps: Arc<Vec<<<G::Engine as ScalarEngine>::Fr as PrimeField>::Repr>>,
+) -> Waiter<Result<<G as CurveAffine>::Projective, SynthesisError>>
+where
+    for<'a> &'a Q: QueryDensity,
+    D: Send + Sync + 'static + Clone + AsRef<Q>,
+    G: CurveAffine,
+    G::Engine: crate::bls::Engine,
+    S: SourceBuilder<G>,
+{
+    if let Some(ref mut kern) = kern {
+        let exps = exps;
+        if let Ok(p) = kern.with(|k: &mut gpu::MultiexpKernel<G::Engine>| {
+            let (bss, skip) = bases.clone().get();
+            let n = exps.len();
+            k.multiexp(pool, bss, exps.clone(), skip, n)
+        }) {
+            return Waiter::done(Ok(p));
+        }
+    }
+
+    let c = if exponents.len() < 32 {
+        3u32
+    } else {
+        (f64::from(exponents.len() as u32)).ln().ceil() as u32
+    };
+
+    if let Some(query_size) = density_map.as_ref().get_query_size() {
+        // If the density map has a known query size, it should not be
+        // inconsistent with the number of exponents.
+        assert!(query_size == exponents.len());
+    }
+
+    let result = pool.compute(move || multiexp_inner(bases, density_map, exponents, c));
+
+    #[cfg(feature = "gpu")]
+    {
+        // Do not give the control back to the caller till the
+        // multiexp is done. We may want to reacquire the GPU again
+        // between the multiexps.
+        let result = result.wait();
+        Waiter::done(result)
+    }
+    #[cfg(not(feature = "gpu"))]
+    result
+}
 
 pub fn multiexp_full<Q, D, G, S>(
     pool: &Worker,
@@ -359,6 +410,7 @@ where
     if let Some(ref mut kern) = kern {
         if let Ok(p) = kern.with(|k: &mut gpu::MultiexpKernel<G::Engine>| {
             let (bss, skip) = bases.clone().get();
+            
             k.multiexp(pool, bss, exponents.clone(), skip, exponents.len())
         }) {
             return Waiter::done(Ok(p));

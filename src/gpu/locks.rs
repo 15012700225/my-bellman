@@ -81,17 +81,19 @@ macro_rules! locked_kernel {
             log_d: usize,
             priority: bool,
             kernel: Option<$kern<E>>,
+			gpu_index: usize,
         }
 
         impl<E> $class<E>
         where
             E: Engine,
         {
-            pub fn new(log_d: usize, priority: bool) -> $class<E> {
+            pub fn new(log_d: usize, priority: bool, gpu_index: usize) -> $class<E> {
                 $class::<E> {
                     log_d,
                     priority,
                     kernel: None,
+					gpu_index,
                 }
             }
 

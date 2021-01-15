@@ -334,7 +334,7 @@ where
         None
     };
 
-    let mut fft_kern = Some(LockedFFTKernel::<E>::new(log_d, priority));
+    let mut fft_kern = Some(LockedFFTKernel::<E>::new(log_d, priority, 0));
 
     let a_s = provers
         .iter_mut()
@@ -370,7 +370,7 @@ where
         .collect::<Result<Vec<_>, SynthesisError>>()?;
 
     drop(fft_kern);
-    let mut multiexp_kern = Some(LockedMultiexpKernel::<E>::new(log_d, priority));
+    let mut multiexp_kern = Some(LockedMultiexpKernel::<E>::new(log_d, priority, 0));
 
     let h_s = a_s
         .into_iter()
