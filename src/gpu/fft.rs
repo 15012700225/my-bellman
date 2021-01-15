@@ -19,7 +19,6 @@ where
     program: opencl::Program,
     pq_buffer: opencl::Buffer<E::Fr>,
     omegas_buffer: opencl::Buffer<E::Fr>,
-    _lock: locks::GPULock, // RFC 1857: struct fields are dropped in the same order as they are declared.
     priority: bool,
 }
 
@@ -27,16 +26,15 @@ impl<E> FFTKernel<E>
 where
     E: Engine,
 {
-    pub fn create(priority: bool) -> GPUResult<FFTKernel<E>> {
-        let lock = locks::GPULock::lock();
+    pub fn create(priority: bool, gpu_index: usize) -> GPUResult<FFTKernel<E>> {
 
         let devices = opencl::Device::all()?;
         if devices.is_empty() {
             return Err(GPUError::Simple("No working GPUs found!"));
         }
 
-        // Select the first device for FFT
-        let device = devices[0].clone();
+        // Select the specified device for FFT
+        let device = devices[gpu_index].clone();
 
         let src = sources::kernel::<E>(device.brand() == opencl::Brand::Nvidia);
 
@@ -51,7 +49,6 @@ where
             program,
             pq_buffer,
             omegas_buffer,
-            _lock: lock,
             priority,
         })
     }
