@@ -126,7 +126,6 @@ where
     where
         G: CurveAffine,
     {
-        let t = std::time::Instant::now();
         let exp_bits = exp_size::<E>() * 8;
         let window_size = calc_window_size(n as usize, exp_bits, self.core_count);
         let num_windows = ((exp_bits as f64) / (window_size as f64)).ceil() as usize;
@@ -168,7 +167,6 @@ where
             None,
         );
 
-		let k = std::time::Instant::now();
         call_kernel!(
             kernel,
             &base_buffer,
@@ -180,7 +178,6 @@ where
             num_windows as u32,
             window_size as u32
         )?;
-		info!("multiexp kernel: {:?}", k.elapsed());
 
         let mut results = vec![<G as CurveAffine>::Projective::zero(); num_groups * num_windows];
         result_buffer.read_into(0, &mut results)?;
@@ -200,7 +197,6 @@ where
             bits += w; // Process the next window
         }
 
-        info!("multiexp time cost: {:?}", t.elapsed());
         Ok(acc)
     }
 }

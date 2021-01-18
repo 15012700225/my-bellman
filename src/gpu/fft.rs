@@ -27,7 +27,6 @@ where
     E: Engine,
 {
     pub fn create(priority: bool, gpu_index: usize) -> GPUResult<FFTKernel<E>> {
-
         let devices = opencl::Device::all()?;
         if devices.is_empty() {
             return Err(GPUError::Simple("No working GPUs found!"));
@@ -79,7 +78,7 @@ where
             global_work_size as usize,
             Some(local_work_size as usize),
         );
-		let t = std::time::Instant::now();
+
         call_kernel!(
             kernel,
             src_buffer,
@@ -92,7 +91,7 @@ where
             deg,
             max_deg
         )?;
-		info!("fft kernel time: {:?}", t);
+
         Ok(())
     }
 
@@ -135,6 +134,7 @@ where
         self.setup_pq_omegas(omega, n, max_deg)?;
 
         src_buffer.write_from(0, &*a)?;
+
         let mut log_p = 0u32;
         while log_p < log_n {
             let deg = cmp::min(max_deg, log_n - log_p);
