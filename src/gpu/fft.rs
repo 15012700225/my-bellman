@@ -79,6 +79,7 @@ where
             global_work_size as usize,
             Some(local_work_size as usize),
         );
+		let t = std::time::Instant::now();
         call_kernel!(
             kernel,
             src_buffer,
@@ -91,6 +92,7 @@ where
             deg,
             max_deg
         )?;
+		info!("fft kernel time: {:?}", t);
         Ok(())
     }
 

@@ -41,7 +41,6 @@ where
     core_count: usize,
     n: usize,
 
-    priority: bool,
     _phantom: std::marker::PhantomData<E::Fr>,
 }
 
@@ -100,7 +99,7 @@ impl<E> SingleMultiexpKernel<E>
 where
     E: Engine,
 {
-    pub fn create(d: opencl::Device, priority: bool) -> GPUResult<SingleMultiexpKernel<E>> {
+    pub fn create(d: opencl::Device, _priority: bool) -> GPUResult<SingleMultiexpKernel<E>> {
         let src = sources::kernel::<E>(d.brand() == opencl::Brand::Nvidia);
 
         let exp_bits = exp_size::<E>() * 8;
@@ -114,7 +113,6 @@ where
             program: opencl::Program::from_opencl(d, &src)?,
             core_count,
             n,
-            priority,
             _phantom: std::marker::PhantomData,
         })
     }
@@ -170,6 +168,7 @@ where
             None,
         );
 
+		let k = std::time::Instant::now();
         call_kernel!(
             kernel,
             &base_buffer,
@@ -181,6 +180,7 @@ where
             num_windows as u32,
             window_size as u32
         )?;
+		info!("multiexp kernel: {:?}", k.elapsed());
 
         let mut results = vec![<G as CurveAffine>::Projective::zero(); num_groups * num_windows];
         result_buffer.read_into(0, &mut results)?;

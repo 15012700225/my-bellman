@@ -410,7 +410,7 @@ where
     if let Some(ref mut kern) = kern {
         if let Ok(p) = kern.with(|k: &mut gpu::MultiexpKernel<G::Engine>| {
             let (bss, skip) = bases.clone().get();
-            
+
             k.multiexp(pool, bss, exponents.clone(), skip, exponents.len())
         }) {
             return Waiter::done(Ok(p));
@@ -494,7 +494,11 @@ fn test_with_bls12() {
     assert_eq!(naive, fast);
 }
 
-pub fn create_multiexp_kernel<E>(_log_d: usize, priority: bool, _gpu_index: usize) -> Option<gpu::MultiexpKernel<E>>
+pub fn create_multiexp_kernel<E>(
+    _log_d: usize,
+    priority: bool,
+    _gpu_index: usize,
+) -> Option<gpu::MultiexpKernel<E>>
 where
     E: crate::bls::Engine,
 {

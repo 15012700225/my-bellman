@@ -98,9 +98,9 @@ impl<E: Engine, G: Group<E>> EvaluationDomain<E, G> {
         worker: &Worker,
         kern: &mut Option<gpu::LockedFFTKernel<E>>,
     ) -> gpu::GPUResult<()> {
+        let t = std::time::Instant::now();
         best_fft(kern, &mut self.coeffs, worker, &self.omegainv, self.exp)?;
 
-        let t = std::time::Instant::now();
         worker.scope(self.coeffs.len(), |scope, chunk| {
             let minv = self.minv;
 
@@ -111,8 +111,8 @@ impl<E: Engine, G: Group<E>> EvaluationDomain<E, G> {
                     }
                 });
             }
-            info!("ifft time: {:?}", t.elapsed());
         });
+        info!("ifft time: {:?}", t.elapsed());
 
         Ok(())
     }
@@ -138,8 +138,8 @@ impl<E: Engine, G: Group<E>> EvaluationDomain<E, G> {
     ) -> gpu::GPUResult<()> {
         let t = std::time::Instant::now();
         self.distribute_powers(worker, E::Fr::multiplicative_generator());
-        info!("coset fft: {:?}", t.elapsed());
         self.fft(worker, kern)?;
+        info!("coset fft: {:?}", t.elapsed());
         Ok(())
     }
 
@@ -148,9 +148,11 @@ impl<E: Engine, G: Group<E>> EvaluationDomain<E, G> {
         worker: &Worker,
         kern: &mut Option<gpu::LockedFFTKernel<E>>,
     ) -> gpu::GPUResult<()> {
+        let t = std::time::Instant::now();
         let geninv = self.geninv;
         self.ifft(worker, kern)?;
         self.distribute_powers(worker, geninv);
+        info!("icoset fft: {:?}", t.elapsed());
         Ok(())
     }
 
@@ -331,7 +333,9 @@ pub fn gpu_fft<E: Engine, T: Group<E>>(
     // For compatibility/performance reasons we decided to transmute the array to the desired type
     // as it seems safe and needs less modifications in the current structure of Bellman library.
     let a = unsafe { std::mem::transmute::<&mut [T], &mut [E::Fr]>(a) };
+    let t = std::time::Instant::now();
     kern.radix_fft(a, omega, log_n)?;
+    info!("gpu_fft time: {:?}", t);
     Ok(())
 }
 
@@ -563,7 +567,11 @@ fn parallel_fft_consistency() {
     test_consistency::<Bls12, _>(rng);
 }
 
-pub fn create_fft_kernel<E>(_log_d: usize, priority: bool, gpu_index: usize) -> Option<gpu::FFTKernel<E>>
+pub fn create_fft_kernel<E>(
+    _log_d: usize,
+    priority: bool,
+    gpu_index: usize,
+) -> Option<gpu::FFTKernel<E>>
 where
     E: Engine,
 {
