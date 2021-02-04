@@ -497,12 +497,12 @@ fn test_with_bls12() {
 pub fn create_multiexp_kernel<E>(
     _log_d: usize,
     priority: bool,
-    _gpu_index: usize,
+    gpu_index: usize,
 ) -> Option<gpu::MultiexpKernel<E>>
 where
     E: crate::bls::Engine,
 {
-    match gpu::MultiexpKernel::<E>::create(priority) {
+    match gpu::MultiexpKernel::<E>::create(priority, gpu_index) {
         Ok(k) => {
             info!("GPU Multiexp kernel instantiated!");
             Some(k)

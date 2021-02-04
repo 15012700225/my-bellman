@@ -214,10 +214,26 @@ impl<E> MultiexpKernel<E>
 where
     E: Engine,
 {
-    pub fn create(priority: bool) -> GPUResult<MultiexpKernel<E>> {
+    pub fn create(priority: bool, gpu_index: usize) -> GPUResult<MultiexpKernel<E>> {
         let lock = locks::GPULock::lock();
 
         let devices = opencl::Device::all()?;
+
+        let use_single_gpu = std::env::var("FIL_PROOFS_MULTIEXP_SINGLE_GPU")
+            .ok()
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(0)
+            != 0;
+
+        let devices = if use_single_gpu {
+            devices
+                .into_iter()
+                .nth(gpu_index)
+                .map(|x| vec![x])
+                .unwrap_or_default()
+        } else {
+            devices
+        };
 
         let kernels: Vec<_> = devices
             .into_iter()
