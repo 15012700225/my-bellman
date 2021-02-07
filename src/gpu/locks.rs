@@ -1,4 +1,5 @@
 //use fs2::FileExt;
+use crate::sector_id::SECTOR_ID;
 use log::{debug, info, warn};
 //use std::fs::File;
 //use std::path::PathBuf;
@@ -16,8 +17,8 @@ use log::{debug, info, warn};
 pub struct GPULock();
 impl GPULock {
     pub fn lock() -> GPULock {
-        debug!("Acquiring GPU lock...");
-        debug!("GPU lock acquired!");
+        debug!("{:?}: Acquiring GPU lock...", *SECTOR_ID);
+        debug!("{:?}: GPU lock acquired!", *SECTOR_ID);
         GPULock()
     }
 }
@@ -35,12 +36,11 @@ impl Drop for GPULock {
 pub struct PriorityLock();
 impl PriorityLock {
     pub fn lock() -> PriorityLock {
-        debug!("Acquiring priority lock...");
+        debug!("{:?}: Acquiring priority lock...", *SECTOR_ID);
         debug!("Priority lock acquired!");
         PriorityLock()
     }
-    pub fn wait(_priority: bool) {
-    }
+    pub fn wait(_priority: bool) {}
     pub fn should_break(_priority: bool) -> bool {
         false
     }
@@ -67,7 +67,7 @@ macro_rules! locked_kernel {
             log_d: usize,
             priority: bool,
             kernel: Option<$kern<E>>,
-			gpu_index: usize,
+            gpu_index: usize,
         }
 
         impl<E> $class<E>
@@ -79,14 +79,14 @@ macro_rules! locked_kernel {
                     log_d,
                     priority,
                     kernel: None,
-					gpu_index,
+                    gpu_index,
                 }
             }
 
             fn init(&mut self) {
                 if self.kernel.is_none() {
                     PriorityLock::wait(self.priority);
-                    info!("GPU is available for {}!", $name);
+                    info!("{:?}: GPU is available for {}!", *SECTOR_ID, $name);
                     self.kernel = $func::<E>(self.log_d, self.priority, self.gpu_index);
                 }
             }

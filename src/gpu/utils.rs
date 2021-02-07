@@ -3,6 +3,8 @@ use rust_gpu_tools::*;
 use std::collections::HashMap;
 use std::env;
 
+use crate::sector_id::SECTOR_ID;
+
 lazy_static::lazy_static! {
     static ref CORE_COUNTS: HashMap<String, usize> = {
         let mut core_counts : HashMap<String, usize> = vec![
@@ -45,7 +47,12 @@ lazy_static::lazy_static! {
                 if splitted.len() != 2 { panic!("Invalid BELLMAN_CUSTOM_GPU!"); }
                 let name = splitted[0].trim().to_string();
                 let cores : usize = splitted[1].trim().parse().expect("Invalid BELLMAN_CUSTOM_GPU!");
-                info!("Adding \"{}\" to GPU list with {} CUDA cores.", name, cores);
+                info!(
+                    "{:?}: Adding \"{}\" to GPU list with {} CUDA cores.",
+                    *SECTOR_ID,
+                    name,
+                    cores
+                );
                 core_counts.insert(name, cores);
             }
             Ok(())
@@ -62,11 +69,11 @@ pub fn get_core_count(d: &opencl::Device) -> usize {
         Some(&cores) => cores,
         None => {
             warn!(
-                "Number of CUDA cores for your device ({}) is unknown! Best performance is \
+                "{:?}: Number of CUDA cores for your device ({}) is unknown! Best performance is \
                  only achieved when the number of CUDA cores is known! You can find the \
                  instructions on how to support custom GPUs here: \
                  https://lotu.sh/en+hardware-mining",
-                name
+                *SECTOR_ID, name
             );
             DEFAULT_CORE_COUNT
         }

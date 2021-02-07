@@ -12,6 +12,8 @@ const LOG2_MAX_ELEMENTS: usize = 32; // At most 2^32 elements is supported.
 const MAX_LOG2_RADIX: u32 = 8; // Radix256
 const MAX_LOG2_LOCAL_WORK_SIZE: u32 = 7; // 128
 
+use crate::sector_id::SECTOR_ID;
+
 pub struct FFTKernel<E>
 where
     E: Engine,
@@ -41,8 +43,12 @@ where
         let pq_buffer = program.create_buffer::<E::Fr>(1 << MAX_LOG2_RADIX >> 1)?;
         let omegas_buffer = program.create_buffer::<E::Fr>(LOG2_MAX_ELEMENTS)?;
 
-        info!("FFT: 1 working device(s) selected.");
-        info!("FFT: Device 0: {}", program.device().name());
+        info!("{:?}: FFT: 1 working device(s) selected.", *SECTOR_ID);
+        info!(
+            "{:?}: FFT: Device 0: {}",
+            *SECTOR_ID,
+            program.device().name()
+        );
 
         Ok(FFTKernel {
             program,

@@ -10,6 +10,7 @@ use std::sync::Arc;
 use super::multicore::{Waiter, Worker};
 use super::SynthesisError;
 use crate::gpu;
+use crate::sector_id::SECTOR_ID;
 
 /// An object that builds a source of bases.
 pub trait SourceBuilder<G: CurveAffine>: Send + Sync + 'static + Clone {
@@ -504,11 +505,14 @@ where
 {
     match gpu::MultiexpKernel::<E>::create(priority, gpu_index) {
         Ok(k) => {
-            info!("GPU Multiexp kernel instantiated!");
+            info!("{:?}: GPU Multiexp kernel instantiated!", *SECTOR_ID);
             Some(k)
         }
         Err(e) => {
-            warn!("Cannot instantiate GPU Multiexp kernel! Error: {}", e);
+            warn!(
+                "{:?}: Cannot instantiate GPU Multiexp kernel! Error: {}",
+                *SECTOR_ID, e
+            );
             None
         }
     }

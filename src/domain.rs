@@ -20,6 +20,7 @@ use super::SynthesisError;
 
 use crate::gpu;
 
+use crate::sector_id::SECTOR_ID;
 use log::{info, warn};
 
 pub struct EvaluationDomain<E: ScalarEngine, G: Group<E>> {
@@ -569,11 +570,14 @@ where
 {
     match gpu::FFTKernel::create(priority, gpu_index) {
         Ok(k) => {
-            info!("GPU FFT kernel instantiated!");
+            info!("{:?}: GPU FFT kernel instantiated!", *SECTOR_ID);
             Some(k)
         }
         Err(e) => {
-            warn!("Cannot instantiate GPU FFT kernel! Error: {}", e);
+            warn!(
+                "{:?}: Cannot instantiate GPU FFT kernel! Error: {}",
+                *SECTOR_ID, e
+            );
             None
         }
     }

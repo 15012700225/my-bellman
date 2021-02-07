@@ -5,6 +5,7 @@ use super::utils;
 use crate::bls::Engine;
 use crate::multicore::Worker;
 use crate::multiexp::{multiexp as cpu_multiexp, FullDensity};
+use crate::sector_id::SECTOR_ID;
 use ff::{PrimeField, ScalarEngine};
 use groupy::{CurveAffine, CurveProjective};
 use log::{error, info};
@@ -22,7 +23,7 @@ pub fn get_cpu_utilization() -> f64 {
         .and_then(|v| match v.parse() {
             Ok(val) => Ok(val),
             Err(_) => {
-                error!("Invalid BELLMAN_CPU_UTILIZATION! Defaulting to 0...");
+                error!("{:?}: Invalid BELLMAN_CPU_UTILIZATION! Defaulting to 0...", *SECTOR_ID);
                 Ok(0f64)
             }
         })
@@ -241,7 +242,8 @@ where
             .filter_map(|(device, res)| {
                 if let Err(ref e) = res {
                     error!(
-                        "Cannot initialize kernel for device '{}'! Error: {}",
+                        "{:?}: Cannot initialize kernel for device '{}'! Error: {}",
+                        *SECTOR_ID,
                         device.name(),
                         e
                     );
@@ -254,13 +256,15 @@ where
             return Err(GPUError::Simple("No working GPUs found!"));
         }
         info!(
-            "Multiexp: {} working device(s) selected. (CPU utilization: {})",
+            "{:?}: Multiexp: {} working device(s) selected. (CPU utilization: {})",
+            *SECTOR_ID,
             kernels.len(),
             get_cpu_utilization()
         );
         for (i, k) in kernels.iter().enumerate() {
             info!(
-                "Multiexp: Device {}: {} (Chunk-size: {})",
+                "{:?}: Multiexp: Device {}: {} (Chunk-size: {})",
+                *SECTOR_ID,
                 i,
                 k.program.device().name(),
                 k.n

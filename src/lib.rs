@@ -139,6 +139,7 @@
 #[macro_use]
 extern crate hex_literal;
 
+pub mod sector_id;
 pub mod bls;
 pub mod domain;
 pub mod gadgets;
