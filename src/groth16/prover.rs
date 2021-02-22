@@ -329,7 +329,7 @@ where
     while (1 << log_d) < n {
         log_d += 1;
     }
-
+    info!("starting proof timer:0");
     #[cfg(feature = "gpu")]
     let prio_lock = if priority {
         Some(PriorityLock::lock())
@@ -337,8 +337,9 @@ where
         None
     };
 
+    info!("starting proof timer:1");
     let mut fft_kern = Some(LockedFFTKernel::<E>::new(log_d, priority, gpu_index));
-
+    info!("starting proof timer:2");
     let a_s = provers
         .iter_mut()
         .map(|prover| {
@@ -374,7 +375,7 @@ where
 
     drop(fft_kern);
     let mut multiexp_kern = Some(LockedMultiexpKernel::<E>::new(log_d, priority,gpu_index));
-
+    info!("starting proof timer:3");
     let h_s = a_s
         .into_iter()
         .map(|a| {
@@ -401,7 +402,7 @@ where
             )
         })
         .collect::<Vec<_>>();
-
+    info!("starting proof timer:4");
     let aux_assignments = provers
         .par_iter_mut()
         .map(|prover| {
@@ -428,7 +429,7 @@ where
             Ok(l)
         })
         .collect::<Result<Vec<_>, SynthesisError>>()?;
-
+    info!("starting proof timer:5");
     let inputs = provers
         .into_iter()
         .zip(input_assignments.iter())
@@ -510,6 +511,7 @@ where
 
     drop(multiexp_kern);
 
+    info!("starting proof timer:6");
     #[cfg(feature = "gpu")]
     drop(prio_lock);
 
