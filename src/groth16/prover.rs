@@ -2,7 +2,6 @@ use std::sync::Arc;
 use std::time::Instant;
 
 use crate::bls::Engine;
-use crate::sector_id::SECTOR_ID;
 use ff::{Field, PrimeField};
 use groupy::{CurveAffine, CurveProjective};
 use rand_core::RngCore;
@@ -249,7 +248,7 @@ pub fn create_random_proof_batch_priority<E, C, R, P: ParameterSource<E>>(
     params: P,
     rng: &mut R,
     priority: bool,
-    gpu_index: usize,
+    gpu_index:usize,
 ) -> Result<Vec<Proof<E>>, SynthesisError>
 where
     E: Engine,
@@ -259,7 +258,7 @@ where
     let r_s = (0..circuits.len()).map(|_| E::Fr::random(rng)).collect();
     let s_s = (0..circuits.len()).map(|_| E::Fr::random(rng)).collect();
 
-    create_proof_batch_priority::<E, C, P>(circuits, params, r_s, s_s, priority, gpu_index)
+    create_proof_batch_priority::<E, C, P>(circuits, params, r_s, s_s, priority,gpu_index)
 }
 
 pub fn create_proof_batch_priority<E, C, P: ParameterSource<E>>(
@@ -268,20 +267,15 @@ pub fn create_proof_batch_priority<E, C, P: ParameterSource<E>>(
     r_s: Vec<E::Fr>,
     s_s: Vec<E::Fr>,
     priority: bool,
-    gpu_index: usize,
+    gpu_index:usize,
 ) -> Result<Vec<Proof<E>>, SynthesisError>
 where
     E: Engine,
     C: Circuit<E> + Send,
 {
-    info!(
-        "{:?}: Bellperson {} is being used!",
-        *SECTOR_ID, BELLMAN_VERSION
-    );
+    info!("Bellperson {} is being used!", BELLMAN_VERSION);
 
-    THREAD_POOL.install(|| {
-        create_proof_batch_priority_inner(circuits, params, r_s, s_s, priority, gpu_index)
-    })
+    THREAD_POOL.install(|| create_proof_batch_priority_inner(circuits, params, r_s, s_s, priority,gpu_index))
 }
 
 fn create_proof_batch_priority_inner<E, C, P: ParameterSource<E>>(
@@ -290,7 +284,7 @@ fn create_proof_batch_priority_inner<E, C, P: ParameterSource<E>>(
     r_s: Vec<E::Fr>,
     s_s: Vec<E::Fr>,
     priority: bool,
-    gpu_index: usize,
+    gpu_index:usize,
 ) -> Result<Vec<Proof<E>>, SynthesisError>
 where
     E: Engine,
@@ -335,7 +329,7 @@ where
     while (1 << log_d) < n {
         log_d += 1;
     }
-    info!("{:?}: starting proof timer:0", *SECTOR_ID);
+    info!("starting proof timer:0");
     #[cfg(feature = "gpu")]
     let prio_lock = if priority {
         Some(PriorityLock::lock())
@@ -343,9 +337,9 @@ where
         None
     };
 
-    info!("{:?}: starting proof timer:1", *SECTOR_ID);
+    info!("starting proof timer:1");
     let mut fft_kern = Some(LockedFFTKernel::<E>::new(log_d, priority, gpu_index));
-    info!("{:?}: starting proof timer:2", *SECTOR_ID);
+    info!("starting proof timer:2");
     let a_s = provers
         .iter_mut()
         .map(|prover| {
@@ -380,8 +374,8 @@ where
         .collect::<Result<Vec<_>, SynthesisError>>()?;
 
     drop(fft_kern);
-    let mut multiexp_kern = Some(LockedMultiexpKernel::<E>::new(log_d, priority, gpu_index));
-    info!("{:?}: starting proof timer:3", *SECTOR_ID);
+    let mut multiexp_kern = Some(LockedMultiexpKernel::<E>::new(log_d, priority,gpu_index));
+    info!("starting proof timer:3");
     let h_s = a_s
         .into_iter()
         .map(|a| {
@@ -408,7 +402,7 @@ where
             )
         })
         .collect::<Vec<_>>();
-    info!("{:?}: starting proof timer:4", *SECTOR_ID);
+    info!("starting proof timer:4");
     let aux_assignments = provers
         .par_iter_mut()
         .map(|prover| {
@@ -517,7 +511,7 @@ where
 
     drop(multiexp_kern);
 
-    info!("{:?}: starting proof timer:6", *SECTOR_ID);
+    info!("starting proof timer:6");
     #[cfg(feature = "gpu")]
     drop(prio_lock);
 
@@ -578,7 +572,7 @@ where
         .collect::<Result<Vec<_>, SynthesisError>>()?;
 
     let proof_time = start.elapsed();
-    info!("{:?}: prover time: {:?}", *SECTOR_ID, proof_time);
+    info!("prover time: {:?}", proof_time);
 
     Ok(proofs)
 }

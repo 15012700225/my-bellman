@@ -147,7 +147,6 @@ pub mod gpu;
 pub mod groth16;
 pub mod multicore;
 pub mod multiexp;
-pub mod sector_id;
 
 pub mod util_cs;
 use ff::{Field, ScalarEngine};
