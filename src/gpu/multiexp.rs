@@ -23,7 +23,10 @@ pub fn get_cpu_utilization() -> f64 {
         .and_then(|v| match v.parse() {
             Ok(val) => Ok(val),
             Err(_) => {
-                error!("{:?}: Invalid BELLMAN_CPU_UTILIZATION! Defaulting to 0...", *SECTOR_ID);
+                error!(
+                    "{:?}: Invalid BELLMAN_CPU_UTILIZATION! Defaulting to 0...",
+                    *SECTOR_ID
+                );
                 Ok(0f64)
             }
         })

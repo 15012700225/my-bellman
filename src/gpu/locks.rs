@@ -95,8 +95,7 @@ macro_rules! locked_kernel {
                 if let Some(_kernel) = self.kernel.take() {
                     warn!(
                         "{:?}: GPU acquired by a high priority process! Freeing up {} kernels...",
-						*SECTOR_ID,
-                        $name
+                        *SECTOR_ID, $name
                     );
                 }
             }
@@ -119,7 +118,10 @@ macro_rules! locked_kernel {
                                 self.init();
                             }
                             Err(e) => {
-                                warn!("{:?}: GPU {} failed! Falling back to CPU... Error: {}", *SECTOR_ID, $name, e);
+                                warn!(
+                                    "{:?}: GPU {} failed! Falling back to CPU... Error: {}",
+                                    *SECTOR_ID, $name, e
+                                );
                                 return Err(e);
                             }
                             Ok(v) => return Ok(v),
