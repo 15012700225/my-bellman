@@ -304,6 +304,7 @@ where
         crate::multicore::THREAD_POOL.install(|| {
             use rayon::prelude::*;
 
+			info!("{:?}: start thread_pool ", *SECTOR_ID);
             let mut acc = <G as CurveAffine>::Projective::zero();
 
             let results = if n > 0 {
@@ -324,6 +325,8 @@ where
             } else {
                 Vec::new()
             };
+
+			info!("{:?}: end thread_pool ", *SECTOR_ID);
 
             let cpu_acc = cpu_multiexp(
                 &pool,
