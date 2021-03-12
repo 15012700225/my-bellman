@@ -339,11 +339,14 @@ where
                 &mut None,
             );
 
+			info!("{:?}: debuglog {}", *SECTOR_ID, line!());
             for r in results {
                 acc.add_assign(&r?);
             }
 
+			info!("{:?}: debuglog {}", *SECTOR_ID, line!());
             acc.add_assign(&cpu_acc.wait().unwrap());
+			info!("{:?}: debuglog {}", *SECTOR_ID, line!());
             Ok(acc)
         })
     }

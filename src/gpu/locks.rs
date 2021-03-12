@@ -114,6 +114,7 @@ macro_rules! locked_kernel {
                     if let Some(ref mut k) = self.kernel {
                         match f(k) {
                             Err(GPUError::GPUTaken) => {
+                                warn!("{:?}: GPU taken, re-initializing", *SECTOR_ID);
                                 self.free();
                                 self.init();
                             }
