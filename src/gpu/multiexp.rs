@@ -297,10 +297,10 @@ where
         let bases = &bases[skip..(skip + n)];
         let exps = &exps[..n];
 
-        let cpu_n = ((n as f64) * get_cpu_utilization()) as usize;
-        let n = n - cpu_n;
-        let (cpu_bases, bases) = bases.split_at(cpu_n);
-        let (cpu_exps, exps) = exps.split_at(cpu_n);
+        // let cpu_n = 0;
+        // let n = n - cpu_n;
+        // let (cpu_bases, bases) = bases.split_at(0);
+        // let (cpu_exps, exps) = exps.split_at(cpu_n);
 
         let chunk_size = ((n as f64) / (num_devices as f64)).ceil() as usize;
 
@@ -331,22 +331,21 @@ where
 
 			info!("{:?}: end thread_pool ", *SECTOR_ID);
 
-            let cpu_acc = cpu_multiexp(
-                &pool,
-                (Arc::new(cpu_bases.to_vec()), 0),
-                FullDensity,
-                Arc::new(cpu_exps.to_vec()),
-                &mut None,
-            );
+            // let cpu_acc = cpu_multiexp(
+            //     &pool,
+            //     (Arc::new(cpu_bases.to_vec()), 0),
+            //     FullDensity,
+            //     Arc::new(cpu_exps.to_vec()),
+            //     &mut None,
+            // );
 
 			info!("{:?}: debuglog {}", *SECTOR_ID, line!());
             for r in results {
                 acc.add_assign(&r?);
             }
 
-			info!("{:?}: debuglog {}", *SECTOR_ID, line!());
-            acc.add_assign(&cpu_acc.wait().unwrap());
-			info!("{:?}: debuglog {}", *SECTOR_ID, line!());
+			// info!("{:?}: debuglog {}", *SECTOR_ID, line!());
+            // acc.add_assign(&cpu_acc.wait().unwrap());
             Ok(acc)
         })
     }
