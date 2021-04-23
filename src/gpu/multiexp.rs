@@ -4,7 +4,6 @@ use super::sources;
 use super::utils;
 use crate::bls::Engine;
 use crate::multicore::Worker;
-use crate::multiexp::{multiexp as cpu_multiexp, FullDensity};
 use crate::sector_id::SECTOR_ID;
 use ff::{PrimeField, ScalarEngine};
 use groupy::{CurveAffine, CurveProjective};
@@ -281,7 +280,7 @@ where
 
     pub fn multiexp<G>(
         &mut self,
-        pool: &Worker,
+        _pool: &Worker,
         bases: Arc<Vec<G>>,
         exps: Arc<Vec<<<G::Engine as ScalarEngine>::Fr as PrimeField>::Repr>>,
         skip: usize,
