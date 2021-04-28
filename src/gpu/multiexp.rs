@@ -76,8 +76,7 @@ fn calc_best_chunk_size(max_window_size: usize, core_count: usize, exp_bits: usi
         * (max_window_size as f64)
         * 2f64
         * (core_count as f64)
-        / (exp_bits as f64)
-        / 4f64)
+        / (exp_bits as f64))
         .ceil() as usize
 }
 
@@ -303,11 +302,11 @@ where
         // let (cpu_exps, exps) = exps.split_at(cpu_n);
 
         let chunk_size = ((n as f64) / (num_devices as f64)).ceil() as usize;
+        info!("{:?}: multiexp chunk_size: {}", *SECTOR_ID, chunk_size);
 
         crate::multicore::THREAD_POOL.install(|| {
             use rayon::prelude::*;
 
-			info!("{:?}: start thread_pool ", *SECTOR_ID);
             let mut acc = <G as CurveAffine>::Projective::zero();
 
             let results = if n > 0 {
@@ -329,7 +328,6 @@ where
                 Vec::new()
             };
 
-			info!("{:?}: end thread_pool ", *SECTOR_ID);
 
             // let cpu_acc = cpu_multiexp(
             //     &pool,
@@ -339,7 +337,6 @@ where
             //     &mut None,
             // );
 
-			info!("{:?}: debuglog {}", *SECTOR_ID, line!());
             for r in results {
                 acc.add_assign(&r?);
             }
