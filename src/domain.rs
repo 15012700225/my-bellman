@@ -327,7 +327,7 @@ pub fn gpu_fft<E: Engine, T: Group<E>>(
     // size.
     // For compatibility/performance reasons we decided to transmute the array to the desired type
     // as it seems safe and needs less modifications in the current structure of Bellman library.
-    let a = unsafe { std::mem::transmute::<&mut [T], &mut [E::Fr]>(a) };
+    let a = unsafe { &mut *(a as *mut [T] as *mut [<E as ff::ScalarEngine>::Fr]) };
     kern.radix_fft(a, omega, log_n)?;
     Ok(())
 }
@@ -342,10 +342,10 @@ pub fn serial_fft<E: ScalarEngine, T: Group<E>>(a: &mut [T], omega: &E::Fr, log_
         r
     }
 
-    let n = a.len() as u32;
-    assert_eq!(n, 1 << log_n);
+    let len = a.len() as u32;
+    assert_eq!(len, 1 << log_n);
 
-    for k in 0..n {
+    for k in 0..len {
         let rk = bitreverse(k, log_n);
         if k < rk {
             a.swap(rk as usize, k as usize);
@@ -354,10 +354,10 @@ pub fn serial_fft<E: ScalarEngine, T: Group<E>>(a: &mut [T], omega: &E::Fr, log_
 
     let mut m = 1;
     for _ in 0..log_n {
-        let w_m = omega.pow(&[u64::from(n / (2 * m))]);
+        let w_m = omega.pow(&[u64::from(len / (2 * m))]);
 
         let mut k = 0;
-        while k < n {
+        while k < len {
             let mut w = E::Fr::one();
             for j in 0..m {
                 let mut t = a[(k + j + m) as usize];

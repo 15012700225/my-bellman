@@ -19,19 +19,17 @@ const MEMORY_PADDING: f64 = 0.2f64; // Let 20% of GPU memory be free
 pub fn get_cpu_utilization() -> f64 {
     use std::env;
     env::var("BELLMAN_CPU_UTILIZATION")
-        .and_then(|v| match v.parse() {
-            Ok(val) => Ok(val),
-            Err(_) => {
-                error!(
-                    "{:?}: Invalid BELLMAN_CPU_UTILIZATION! Defaulting to 0...",
-                    *SECTOR_ID
-                );
-                Ok(0f64)
-            }
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .unwrap_or_else(|| {
+            error!(
+                "{:?}: Invalid BELLMAN_CPU_UTILIZATION! Defaulting to 0...",
+                *SECTOR_ID
+            );
+            0f64
         })
-        .unwrap_or(0f64)
-        .max(0f64)
-        .min(1f64)
+        .max(1f64)
+        .min(0f64)
 }
 
 // Multiexp kernel for a single GPU
@@ -78,7 +76,8 @@ fn calc_best_chunk_size(max_window_size: usize, core_count: usize, exp_bits: usi
         * (max_window_size as f64)
         * 2f64
         * (core_count as f64)
-        / (exp_bits as f64))
+        / (exp_bits as f64)
+        / 4f64)
         .ceil() as usize
 }
 
@@ -257,12 +256,14 @@ where
         if kernels.is_empty() {
             return Err(GPUError::Simple("No working GPUs found!"));
         }
+
         info!(
             "{:?}: Multiexp: {} working device(s) selected. (CPU utilization: {})",
             *SECTOR_ID,
             kernels.len(),
             get_cpu_utilization()
         );
+
         for (i, k) in kernels.iter().enumerate() {
             info!(
                 "{:?}: Multiexp: Device {}: {} (Chunk-size: {})",
