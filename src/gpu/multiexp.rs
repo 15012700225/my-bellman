@@ -308,6 +308,10 @@ where
             use rayon::prelude::*;
 
             let mut acc = <G as CurveAffine>::Projective::zero();
+			let split = match self.kernels.len() {
+				1 => 1,
+				n => n * 8,
+			};
 
             let results = if n > 0 {
                 bases
@@ -316,7 +320,8 @@ where
                     .zip(self.kernels.par_iter_mut())
                     .map(|((bases, exps), kern)| -> Result<<G as CurveAffine>::Projective, GPUError> {
                         let mut acc = <G as CurveAffine>::Projective::zero();
-                        for (bases, exps) in bases.chunks(kern.n).zip(exps.chunks(kern.n)) {
+
+                        for (bases, exps) in bases.chunks(kern.n / split).zip(exps.chunks(kern.n / split)) {
                             let result = kern.multiexp(bases, exps, bases.len())?;
                             acc.add_assign(&result);
                         }
@@ -329,20 +334,11 @@ where
             };
 
 
-            // let cpu_acc = cpu_multiexp(
-            //     &pool,
-            //     (Arc::new(cpu_bases.to_vec()), 0),
-            //     FullDensity,
-            //     Arc::new(cpu_exps.to_vec()),
-            //     &mut None,
-            // );
 
             for r in results {
                 acc.add_assign(&r?);
             }
 
-			// info!("{:?}: debuglog {}", *SECTOR_ID, line!());
-            // acc.add_assign(&cpu_acc.wait().unwrap());
             Ok(acc)
         })
     }
