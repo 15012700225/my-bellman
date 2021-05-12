@@ -16,6 +16,8 @@ pub enum GPUError {
     KernelUninitialized,
     #[error("GPU accelerator is disabled!")]
     GPUDisabled,
+    #[error("GPU count mismatch")]
+    GPUCountMismatch,
 }
 
 pub type GPUResult<T> = std::result::Result<T, GPUError>;

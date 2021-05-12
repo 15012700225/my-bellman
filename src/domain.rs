@@ -314,6 +314,72 @@ fn best_fft<E: Engine, T: Group<E>>(
     Ok(())
 }
 
+pub fn split_fft<E: Engine, T: Group<E>>(
+    kern: &mut [gpu::LockedFFTKernel<E>],
+    a: &mut [T],
+    omega: &E::Fr,
+    log_n: u32,
+) -> gpu::GPUResult<()> {
+    let num_cpus = kern.len();
+    let log_cpus = match num_cpus {
+        2 => 1,
+        4 => 2,
+        8 => 3,
+        _ => return Err(gpu::GPUError::GPUCountMismatch),
+    };
+
+    let worker = Worker::new();
+
+    let log_new_n = log_n - log_cpus;
+    let mut tmp = vec![vec![T::group_zero(); 1 << log_new_n]; num_cpus];
+    let new_omega = omega.pow(&[num_cpus as u64]);
+
+    crossbeam::scope(|s| {
+        let a = &*a;
+
+        for (j, (tmp, k)) in tmp.iter_mut().zip(kern.iter_mut()).enumerate() {
+            s.spawn(move |_| {
+                // Shuffle into a sub-FFT
+                let omega_j = omega.pow(&[j as u64]);
+                let omega_step = omega.pow(&[(j as u64) << log_new_n]);
+
+                let mut elt = E::Fr::one();
+                for (i, tmp) in tmp.iter_mut().enumerate() {
+                    for s in 0..num_cpus {
+                        let idx = (i + (s << log_new_n)) % (1 << log_n);
+                        let mut t = a[idx];
+                        t.group_mul_assign(&elt);
+                        tmp.group_add_assign(&t);
+                        elt.mul_assign(&omega_step);
+                    }
+                    elt.mul_assign(&omega_j);
+                }
+
+                // Perform sub-FFT
+                k.with(|k| gpu_fft(k, tmp, &new_omega, log_new_n)).unwrap();
+            });
+        }
+    })
+    .expect("crossbeam scope failure for multi-gpu FFT");
+
+    // TODO: does this hurt or help?
+    worker.scope(a.len(), |scope, chunk| {
+        let tmp = &tmp;
+
+        for (idx, a) in a.chunks_mut(chunk).enumerate() {
+            scope.spawn(move |_scope| {
+                let mut idx = idx * chunk;
+                let mask = (1 << log_cpus) - 1;
+                for a in a {
+                    *a = tmp[idx & mask][idx >> log_cpus];
+                    idx += 1;
+                }
+            });
+        }
+    });
+    todo!()
+}
+
 pub fn gpu_fft<E: Engine, T: Group<E>>(
     kern: &mut gpu::FFTKernel<E>,
     a: &mut [T],
@@ -394,7 +460,7 @@ fn parallel_fft<E: ScalarEngine, T: Group<E>>(
         let a = &*a;
 
         for (j, tmp) in tmp.iter_mut().enumerate() {
-            scope.spawn(move |_scope| {
+            scope.spawn(move |_| {
                 // Shuffle into a sub-FFT
                 let omega_j = omega.pow(&[j as u64]);
                 let omega_step = omega.pow(&[(j as u64) << log_new_n]);
