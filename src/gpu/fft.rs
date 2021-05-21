@@ -1,7 +1,7 @@
 use crate::bls::Engine;
 use crate::gpu::{
     error::{GPUError, GPUResult},
-    locks, sources,
+    sources,
 };
 use ff::Field;
 use log::info;
@@ -21,14 +21,13 @@ where
     program: opencl::Program,
     pq_buffer: opencl::Buffer<E::Fr>,
     omegas_buffer: opencl::Buffer<E::Fr>,
-    priority: bool,
 }
 
 impl<E> FFTKernel<E>
 where
     E: Engine,
 {
-    pub fn create(priority: bool, gpu_index: usize) -> GPUResult<FFTKernel<E>> {
+    pub fn create(_priority: bool, gpu_index: usize) -> GPUResult<FFTKernel<E>> {
         let devices = opencl::Device::all()?;
         if devices.is_empty() {
             return Err(GPUError::Simple("No working GPUs found!"));
@@ -54,7 +53,6 @@ where
             program,
             pq_buffer,
             omegas_buffer,
-            priority,
         })
     }
 
@@ -72,9 +70,6 @@ where
         deg: u32,
         max_deg: u32,
     ) -> GPUResult<()> {
-        if locks::PriorityLock::should_break(self.priority) {
-            return Err(GPUError::GPUTaken);
-        }
 
         let n = 1u32 << log_n;
         let local_work_size = 1 << cmp::min(deg - 1, MAX_LOG2_LOCAL_WORK_SIZE);
@@ -154,3 +149,7 @@ where
         Ok(())
     }
 }
+
+
+
+

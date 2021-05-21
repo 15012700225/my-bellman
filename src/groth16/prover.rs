@@ -10,7 +10,7 @@ use rayon::prelude::*;
 use super::{ParameterSource, Proof};
 use crate::domain::{EvaluationDomain, Scalar};
 use crate::gpu::{LockedFFTKernel, LockedMultiexpKernel};
-use crate::multicore::{Worker, THREAD_POOL};
+use crate::multicore::THREAD_POOL;
 use crate::multiexp::{multiexp, DensityTracker, FullDensity};
 use crate::{
     Circuit, ConstraintSystem, Index, LinearCombination, SynthesisError, Variable, BELLMAN_VERSION,
@@ -308,7 +308,6 @@ where
     let start = Instant::now();
     info!("starting proof timer");
 
-    let worker = Worker::new();
     let input_len = provers[0].input_assignment.len();
     let vk = params.get_vk(input_len)?;
     let n = provers[0].a.len();
@@ -346,19 +345,19 @@ where
             let mut c =
                 EvaluationDomain::from_coeffs(std::mem::replace(&mut prover.c, Vec::new()))?;
 
-            a.ifft(&worker, &mut fft_kern)?;
-            a.coset_fft(&worker, &mut fft_kern)?;
-            b.ifft(&worker, &mut fft_kern)?;
-            b.coset_fft(&worker, &mut fft_kern)?;
-            c.ifft(&worker, &mut fft_kern)?;
-            c.coset_fft(&worker, &mut fft_kern)?;
+            a.ifft(&mut fft_kern)?;
+            a.coset_fft(&mut fft_kern)?;
+            b.ifft(&mut fft_kern)?;
+            b.coset_fft(&mut fft_kern)?;
+            c.ifft(&mut fft_kern)?;
+            c.coset_fft(&mut fft_kern)?;
 
-            a.mul_assign(&worker, &b);
+            a.mul_assign(&b);
             drop(b);
-            a.sub_assign(&worker, &c);
+            a.sub_assign(&c);
             drop(c);
-            a.divide_by_z_on_coset(&worker);
-            a.icoset_fft(&worker, &mut fft_kern)?;
+            a.divide_by_z_on_coset();
+            a.icoset_fft(&mut fft_kern)?;
             let mut a = a.into_coeffs();
             let a_len = a.len() - 1;
             a.truncate(a_len);
@@ -375,13 +374,7 @@ where
     let h_s = a_s
         .into_iter()
         .map(|a| {
-            let h = multiexp(
-                &worker,
-                params.get_h(a.len())?,
-                FullDensity,
-                a,
-                &mut multiexp_kern,
-            );
+            let h = multiexp(params.get_h(a.len())?, FullDensity, a, &mut multiexp_kern);
             Ok(h)
         })
         .collect::<Result<Vec<_>, SynthesisError>>()?;
@@ -416,7 +409,6 @@ where
         .iter()
         .map(|aux_assignment| {
             let l = multiexp(
-                &worker,
                 params.get_l(aux_assignment.len())?,
                 FullDensity,
                 aux_assignment.clone(),
@@ -437,7 +429,6 @@ where
                 params.get_a(input_assignment.len(), a_aux_density_total)?;
 
             let a_inputs = multiexp(
-                &worker,
                 a_inputs_source,
                 FullDensity,
                 input_assignment.clone(),
@@ -445,7 +436,6 @@ where
             );
 
             let a_aux = multiexp(
-                &worker,
                 a_aux_source,
                 Arc::new(prover.a_aux_density),
                 aux_assignment.clone(),
@@ -461,7 +451,6 @@ where
                 params.get_b_g1(b_input_density_total, b_aux_density_total)?;
 
             let b_g1_inputs = multiexp(
-                &worker,
                 b_g1_inputs_source,
                 b_input_density.clone(),
                 input_assignment.clone(),
@@ -469,7 +458,6 @@ where
             );
 
             let b_g1_aux = multiexp(
-                &worker,
                 b_g1_aux_source,
                 b_aux_density.clone(),
                 aux_assignment.clone(),
@@ -480,14 +468,12 @@ where
                 params.get_b_g2(b_input_density_total, b_aux_density_total)?;
 
             let b_g2_inputs = multiexp(
-                &worker,
                 b_g2_inputs_source,
                 b_input_density,
                 input_assignment.clone(),
                 &mut multiexp_kern,
             );
             let b_g2_aux = multiexp(
-                &worker,
                 b_g2_aux_source,
                 b_aux_density,
                 aux_assignment.clone(),

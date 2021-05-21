@@ -83,7 +83,7 @@ macro_rules! locked_kernel {
                 }
             }
 
-            fn init(&mut self) {
+            pub fn init(&mut self) {
                 if self.kernel.is_none() {
                     PriorityLock::wait(self.priority);
                     info!("{:?}: GPU is available for {}!", *SECTOR_ID, $name);

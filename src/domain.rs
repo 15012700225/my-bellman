@@ -85,23 +85,27 @@ impl<E: Engine, G: Group<E>> EvaluationDomain<E, G> {
         })
     }
 
-    pub fn fft(
-        &mut self,
-        worker: &Worker,
-        kern: &mut Option<gpu::LockedFFTKernel<E>>,
-    ) -> gpu::GPUResult<()> {
-        best_fft(kern, &mut self.coeffs, worker, &self.omega, self.exp)?;
+    pub fn fft(&mut self, kern: &mut Option<gpu::LockedFFTKernel<E>>) -> gpu::GPUResult<()> {
+        best_fft(
+            kern,
+            &mut self.coeffs,
+            &Worker::new(),
+            &self.omega,
+            self.exp,
+        )?;
         Ok(())
     }
 
-    pub fn ifft(
-        &mut self,
-        worker: &Worker,
-        kern: &mut Option<gpu::LockedFFTKernel<E>>,
-    ) -> gpu::GPUResult<()> {
-        best_fft(kern, &mut self.coeffs, worker, &self.omegainv, self.exp)?;
+    pub fn ifft(&mut self, kern: &mut Option<gpu::LockedFFTKernel<E>>) -> gpu::GPUResult<()> {
+        best_fft(
+            kern,
+            &mut self.coeffs,
+            &Worker::new(),
+            &self.omegainv,
+            self.exp,
+        )?;
 
-        worker.scope(self.coeffs.len(), |scope, chunk| {
+        Worker::new().scope(self.coeffs.len(), |scope, chunk| {
             let minv = self.minv;
 
             for v in self.coeffs.chunks_mut(chunk) {
@@ -116,8 +120,8 @@ impl<E: Engine, G: Group<E>> EvaluationDomain<E, G> {
         Ok(())
     }
 
-    pub fn distribute_powers(&mut self, worker: &Worker, g: E::Fr) {
-        worker.scope(self.coeffs.len(), |scope, chunk| {
+    pub fn distribute_powers(&mut self, g: E::Fr) {
+        Worker::new().scope(self.coeffs.len(), |scope, chunk| {
             for (i, v) in self.coeffs.chunks_mut(chunk).enumerate() {
                 scope.spawn(move |_| {
                     let mut u = g.pow(&[(i * chunk) as u64]);
@@ -130,24 +134,16 @@ impl<E: Engine, G: Group<E>> EvaluationDomain<E, G> {
         });
     }
 
-    pub fn coset_fft(
-        &mut self,
-        worker: &Worker,
-        kern: &mut Option<gpu::LockedFFTKernel<E>>,
-    ) -> gpu::GPUResult<()> {
-        self.distribute_powers(worker, E::Fr::multiplicative_generator());
-        self.fft(worker, kern)?;
+    pub fn coset_fft(&mut self, kern: &mut Option<gpu::LockedFFTKernel<E>>) -> gpu::GPUResult<()> {
+        self.distribute_powers(E::Fr::multiplicative_generator());
+        self.fft(kern)?;
         Ok(())
     }
 
-    pub fn icoset_fft(
-        &mut self,
-        worker: &Worker,
-        kern: &mut Option<gpu::LockedFFTKernel<E>>,
-    ) -> gpu::GPUResult<()> {
+    pub fn icoset_fft(&mut self, kern: &mut Option<gpu::LockedFFTKernel<E>>) -> gpu::GPUResult<()> {
         let geninv = self.geninv;
-        self.ifft(worker, kern)?;
-        self.distribute_powers(worker, geninv);
+        self.ifft(kern)?;
+        self.distribute_powers(geninv);
         Ok(())
     }
 
@@ -163,13 +159,13 @@ impl<E: Engine, G: Group<E>> EvaluationDomain<E, G> {
     /// The target polynomial is the zero polynomial in our
     /// evaluation domain, so we must perform division over
     /// a coset.
-    pub fn divide_by_z_on_coset(&mut self, worker: &Worker) {
+    pub fn divide_by_z_on_coset(&mut self) {
         let i = self
             .z(&E::Fr::multiplicative_generator())
             .inverse()
             .unwrap();
 
-        worker.scope(self.coeffs.len(), |scope, chunk| {
+        Worker::new().scope(self.coeffs.len(), |scope, chunk| {
             for v in self.coeffs.chunks_mut(chunk) {
                 scope.spawn(move |_| {
                     for v in v {
@@ -181,10 +177,10 @@ impl<E: Engine, G: Group<E>> EvaluationDomain<E, G> {
     }
 
     /// Perform O(n) multiplication of two polynomials in the domain.
-    pub fn mul_assign(&mut self, worker: &Worker, other: &EvaluationDomain<E, Scalar<E>>) {
+    pub fn mul_assign(&mut self, other: &EvaluationDomain<E, Scalar<E>>) {
         assert_eq!(self.coeffs.len(), other.coeffs.len());
 
-        worker.scope(self.coeffs.len(), |scope, chunk| {
+        Worker::new().scope(self.coeffs.len(), |scope, chunk| {
             for (a, b) in self
                 .coeffs
                 .chunks_mut(chunk)
@@ -200,10 +196,10 @@ impl<E: Engine, G: Group<E>> EvaluationDomain<E, G> {
     }
 
     /// Perform O(n) subtraction of one polynomial from another in the domain.
-    pub fn sub_assign(&mut self, worker: &Worker, other: &EvaluationDomain<E, G>) {
+    pub fn sub_assign(&mut self, other: &EvaluationDomain<E, G>) {
         assert_eq!(self.coeffs.len(), other.coeffs.len());
 
-        worker.scope(self.coeffs.len(), |scope, chunk| {
+        Worker::new().scope(self.coeffs.len(), |scope, chunk| {
             for (a, b) in self
                 .coeffs
                 .chunks_mut(chunk)
@@ -344,6 +340,7 @@ pub fn split_fft<E: Engine, T: Group<E>>(
                 let omega_step = omega.pow(&[(j as u64) << log_new_n]);
 
                 let mut elt = E::Fr::one();
+                // elt: omega_step ^ (num_cpus * i) * omega_j ^ i
                 for (i, tmp) in tmp.iter_mut().enumerate() {
                     for s in 0..num_cpus {
                         let idx = (i + (s << log_new_n)) % (1 << log_n);
@@ -536,10 +533,10 @@ fn polynomial_arith() {
                 let mut a = EvaluationDomain::from_coeffs(a).unwrap();
                 let mut b = EvaluationDomain::from_coeffs(b).unwrap();
 
-                a.fft(&worker, &mut None).unwrap();
-                b.fft(&worker, &mut None).unwrap();
-                a.mul_assign(&worker, &b);
-                a.ifft(&worker, &mut None).unwrap();
+                a.fft(&mut None).unwrap();
+                b.fft(&mut None).unwrap();
+                a.mul_assign(&b);
+                a.ifft(&mut None).unwrap();
 
                 for (naive, fft) in naive.iter().zip(a.coeffs.iter()) {
                     assert!(naive == fft);
@@ -571,17 +568,17 @@ fn fft_composition() {
             }
 
             let mut domain = EvaluationDomain::from_coeffs(v.clone()).unwrap();
-            domain.ifft(&worker, &mut None).unwrap();
-            domain.fft(&worker, &mut None).unwrap();
+            domain.ifft(&mut None).unwrap();
+            domain.fft(&mut None).unwrap();
             assert!(v == domain.coeffs);
-            domain.fft(&worker, &mut None).unwrap();
-            domain.ifft(&worker, &mut None).unwrap();
+            domain.fft(&mut None).unwrap();
+            domain.ifft(&mut None).unwrap();
             assert!(v == domain.coeffs);
-            domain.icoset_fft(&worker, &mut None).unwrap();
-            domain.coset_fft(&worker, &mut None).unwrap();
+            domain.icoset_fft(&mut None).unwrap();
+            domain.coset_fft(&mut None).unwrap();
             assert!(v == domain.coeffs);
-            domain.coset_fft(&worker, &mut None).unwrap();
-            domain.icoset_fft(&worker, &mut None).unwrap();
+            domain.coset_fft(&mut None).unwrap();
+            domain.icoset_fft(&mut None).unwrap();
             assert!(v == domain.coeffs);
         }
     }
@@ -668,7 +665,7 @@ mod tests {
 
         let worker = Worker::new();
         let log_cpus = worker.log_num_cpus();
-        let mut kern = gpu::FFTKernel::create(false).expect("Cannot initialize kernel!");
+        let mut kern = gpu::FFTKernel::create(false, 0).expect("Cannot initialize kernel!");
 
         for log_d in 1..25 {
             let d = 1 << log_d;

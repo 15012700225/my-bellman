@@ -286,7 +286,6 @@ where
 /// Perform multi-exponentiation. The caller is responsible for ensuring the
 /// query size is the same as the number of exponents.
 pub fn multiexp<Q, D, G, S>(
-    pool: &Worker,
     bases: S,
     density_map: D,
     exponents: Arc<Vec<<<G::Engine as ScalarEngine>::Fr as PrimeField>::Repr>>,
@@ -311,7 +310,7 @@ where
             }
 
             let (bss, skip) = bases.clone().get();
-            k.multiexp(pool, bss, Arc::new(exps.clone()), skip, n)
+            k.multiexp(bss, Arc::new(exps.clone()), skip, n)
         }) {
             return Waiter::done(Ok(p));
         }
@@ -329,7 +328,7 @@ where
         assert!(query_size == exponents.len());
     }
 
-    let result = pool.compute(move || multiexp_inner(bases, density_map, exponents, c));
+    let result = Worker::new().compute(move || multiexp_inner(bases, density_map, exponents, c));
 
     #[cfg(feature = "gpu")]
     {
@@ -343,7 +342,6 @@ where
     result
 }
 pub fn multiexp_precompute<Q, D, G, S>(
-    pool: &Worker,
     bases: S,
     density_map: D,
     exponents: Arc<Vec<<<G::Engine as ScalarEngine>::Fr as PrimeField>::Repr>>,
@@ -362,7 +360,7 @@ where
         if let Ok(p) = kern.with(|k: &mut gpu::MultiexpKernel<G::Engine>| {
             let (bss, skip) = bases.clone().get();
             let n = exps.len();
-            k.multiexp(pool, bss, exps.clone(), skip, n)
+            k.multiexp(bss, exps.clone(), skip, n)
         }) {
             return Waiter::done(Ok(p));
         }
@@ -380,7 +378,7 @@ where
         assert!(query_size == exponents.len());
     }
 
-    let result = pool.compute(move || multiexp_inner(bases, density_map, exponents, c));
+    let result = Worker::new().compute(move || multiexp_inner(bases, density_map, exponents, c));
 
     #[cfg(feature = "gpu")]
     {
@@ -395,7 +393,6 @@ where
 }
 
 pub fn multiexp_full<Q, D, G, S>(
-    pool: &Worker,
     bases: S,
     density_map: D,
     exponents: Arc<Vec<<<G::Engine as ScalarEngine>::Fr as PrimeField>::Repr>>,
@@ -412,7 +409,7 @@ where
         if let Ok(p) = kern.with(|k: &mut gpu::MultiexpKernel<G::Engine>| {
             let (bss, skip) = bases.clone().get();
 
-            k.multiexp(pool, bss, exponents.clone(), skip, exponents.len())
+            k.multiexp(bss, exponents.clone(), skip, exponents.len())
         }) {
             return Waiter::done(Ok(p));
         }
@@ -430,7 +427,7 @@ where
         assert!(query_size == exponents.len());
     }
 
-    let result = pool.compute(move || multiexp_inner(bases, density_map, exponents, c));
+    let result = Worker::new().compute(move || multiexp_inner(bases, density_map, exponents, c));
 
     #[cfg(feature = "gpu")]
     {
@@ -463,7 +460,6 @@ fn test_with_bls12() {
     }
 
     use crate::bls::{Bls12, Engine};
-    use rand;
 
     const SAMPLES: usize = 1 << 14;
 
@@ -486,7 +482,7 @@ fn test_with_bls12() {
     let now = std::time::Instant::now();
     let pool = Worker::new();
 
-    let fast = multiexp(&pool, (g, 0), FullDensity, v, &mut None)
+    let fast = multiexp((g, 0), FullDensity, v, &mut None)
         .wait()
         .unwrap();
 

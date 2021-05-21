@@ -3,7 +3,6 @@ use super::locks;
 use super::sources;
 use super::utils;
 use crate::bls::Engine;
-use crate::multicore::Worker;
 use crate::sector_id::SECTOR_ID;
 use ff::{PrimeField, ScalarEngine};
 use groupy::{CurveAffine, CurveProjective};
@@ -280,7 +279,6 @@ where
 
     pub fn multiexp<G>(
         &mut self,
-        _pool: &Worker,
         bases: Arc<Vec<G>>,
         exps: Arc<Vec<<<G::Engine as ScalarEngine>::Fr as PrimeField>::Repr>>,
         skip: usize,
@@ -302,7 +300,6 @@ where
         // let (cpu_exps, exps) = exps.split_at(cpu_n);
 
         let chunk_size = ((n as f64) / (num_devices as f64)).ceil() as usize;
-        info!("{:?}: multiexp chunk_size: {}", *SECTOR_ID, chunk_size);
 
         crate::multicore::THREAD_POOL.install(|| {
             use rayon::prelude::*;

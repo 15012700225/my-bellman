@@ -1,5 +1,5 @@
 //! An interface for dealing with the kinds of parallel computations involved in
-//! `bellperson`. It's currently just a thin wrapper around [`CpuPool`] and
+//! `bellperson`. It's currently just a thin wrapper apub pub pub round [`CpuPool`] and
 //! [`rayon`] but may be extended in the future to allow for various
 //! parallelism strategies.
 //!
@@ -10,7 +10,7 @@ use lazy_static::lazy_static;
 use std::env;
 
 lazy_static! {
-    static ref NUM_CPUS: usize = if let Ok(num) = env::var("BELLMAN_NUM_CPUS") {
+    pub static ref NUM_CPUS: usize = if let Ok(num) = env::var("BELLMAN_NUM_CPUS") {
         if let Ok(num) = num.parse() {
             num
         } else {
