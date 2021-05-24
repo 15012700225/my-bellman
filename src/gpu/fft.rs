@@ -127,14 +127,18 @@ where
     /// * `omega` - Special value `omega` is used for FFT over finite-fields
     /// * `log_n` - Specifies log2 of number of elements
     pub fn radix_fft(&mut self, a: &mut [E::Fr], omega: &E::Fr, log_n: u32) -> GPUResult<()> {
+		let t = std::time::Instant::now();
         let n = 1 << log_n;
+		info!("line: {}, elapsed: {:?}", line!(), t.elapsed());
         let mut src_buffer = self.program.create_buffer::<E::Fr>(n)?;
         let mut dst_buffer = self.program.create_buffer::<E::Fr>(n)?;
+		info!("line: {}, elapsed: {:?}", line!(), t.elapsed());
 
         let max_deg = cmp::min(MAX_LOG2_RADIX, log_n);
         self.setup_pq_omegas(omega, n, max_deg)?;
 
         src_buffer.write_from(0, &*a)?;
+		info!("line: {}, elapsed: {:?}", line!(), t.elapsed());
 
         let mut log_p = 0u32;
         while log_p < log_n {
@@ -144,7 +148,9 @@ where
             std::mem::swap(&mut src_buffer, &mut dst_buffer);
         }
 
+		info!("line: {}, elapsed: {:?}", line!(), t.elapsed());
         src_buffer.read_into(0, a)?;
+		info!("line: {}, elapsed: {:?}", line!(), t.elapsed());
 
         Ok(())
     }
