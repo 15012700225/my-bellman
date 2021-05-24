@@ -310,7 +310,7 @@ where
             }
 
             let (bss, skip) = bases.clone().get();
-            k.multiexp(bss, Arc::new(exps.clone()), skip, n)
+            k.multiexp(bss, Arc::new(exps), skip, n)
         }) {
             return Waiter::done(Ok(p));
         }
