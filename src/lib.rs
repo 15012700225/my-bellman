@@ -216,7 +216,7 @@ impl<E: ScalarEngine> LinearCombination<E> {
     pub fn add_unsimplified(mut self, (coeff, var): (E::Fr, Variable)) -> LinearCombination<E> {
         self.0
             .entry(var)
-            .or_insert(E::Fr::zero())
+            .or_insert_with(E::Fr::zero)
             .add_assign(&coeff);
 
         self
@@ -229,7 +229,7 @@ impl<E: ScalarEngine> Add<(E::Fr, Variable)> for LinearCombination<E> {
     fn add(mut self, (coeff, var): (E::Fr, Variable)) -> LinearCombination<E> {
         self.0
             .entry(var)
-            .or_insert(E::Fr::zero())
+            .or_insert_with(E::Fr::zero)
             .add_assign(&coeff);
 
         self
@@ -268,7 +268,7 @@ impl<'a, E: ScalarEngine> Add<&'a LinearCombination<E>> for LinearCombination<E>
 
     fn add(mut self, other: &'a LinearCombination<E>) -> LinearCombination<E> {
         for (var, val) in &other.0 {
-            self.0.entry(*var).or_insert(E::Fr::zero()).add_assign(val);
+            self.0.entry(*var).or_insert_with(E::Fr::zero).add_assign(val);
         }
 
         self
