@@ -1,3 +1,5 @@
+use std::sync::atomic::AtomicUsize;
+use std::sync::atomic::Ordering::SeqCst;
 use std::sync::Arc;
 use std::time::Instant;
 
@@ -17,6 +19,13 @@ use crate::{
 };
 use log::info;
 
+use lazy_static::lazy_static;
+
+lazy_static! {
+    pub static ref INPUT_LEN: AtomicUsize = AtomicUsize::new(0);
+    pub static ref AUX_LEN: AtomicUsize = AtomicUsize::new(0);
+}
+
 #[cfg(feature = "gpu")]
 use crate::gpu::PriorityLock;
 
@@ -34,12 +43,18 @@ fn eval<E: Engine>(
 
         match index {
             Variable(Index::Input(i)) => {
+                if i < INPUT_LEN.load(SeqCst) {
+                    info!("input-density: {}", i);
+                }
                 tmp = input_assignment[i];
                 if let Some(ref mut v) = input_density {
                     v.inc(i);
                 }
             }
             Variable(Index::Aux(i)) => {
+                if i < AUX_LEN.load(SeqCst) {
+                    info!("aux-density: {}", i);
+                }
                 tmp = aux_assignment[i];
                 if let Some(ref mut v) = aux_density {
                     v.inc(i);
