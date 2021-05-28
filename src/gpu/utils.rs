@@ -80,11 +80,11 @@ pub fn get_core_count(d: &opencl::Device) -> usize {
     }
 }
 pub fn gpu_count() -> usize {
-    opencl::Device::all().unwrap_or_default().len()
+    opencl::Device::all().len()
 }
 
 pub fn dump_device_list() {
-    for d in opencl::Device::all().unwrap() {
+    for d in opencl::Device::all() {
         info!("Device: {:?}", d);
     }
 }

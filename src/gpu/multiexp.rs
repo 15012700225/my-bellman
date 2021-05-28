@@ -217,7 +217,7 @@ where
     pub fn create(priority: bool, gpu_index: usize) -> GPUResult<MultiexpKernel<E>> {
         let lock = locks::GPULock::lock();
 
-        let devices = opencl::Device::all()?;
+        let devices = opencl::Device::all();
 
         let use_single_gpu = std::env::var("FIL_PROOFS_MULTIEXP_SINGLE_GPU")
             .ok()
@@ -237,7 +237,7 @@ where
 
         let kernels: Vec<_> = devices
             .into_iter()
-            .map(|d| (d.clone(), SingleMultiexpKernel::<E>::create(d, priority)))
+            .map(|d| (d.clone(), SingleMultiexpKernel::<E>::create(d.clone(), priority)))
             .filter_map(|(device, res)| {
                 if let Err(ref e) = res {
                     error!(
