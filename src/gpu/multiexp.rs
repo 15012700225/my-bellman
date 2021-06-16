@@ -308,10 +308,12 @@ where
             use rayon::prelude::*;
 
             let mut acc = <G as CurveAffine>::Projective::zero();
-			let split = match self.kernels.len() {
-				1 => 1,
-				n => n * 8,
+			let split = match (std::env::var("C2_ENOUGH_GPU_MEMORY").ok().and_then(|x|x.parse().ok()),self.kernels.len()) {
+				(Some(1), _) => 1,
+				(_, 1) => 1,
+				(_, n) => n * 8,
 			};
+
 
             let results = if n > 0 {
                 bases
