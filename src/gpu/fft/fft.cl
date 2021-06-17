@@ -74,3 +74,12 @@ __kernel void mul_by_field(__global FIELD* elements,
   const uint gid = get_global_id(0);
   elements[gid] = FIELD_mul(elements[gid], field);
 }
+
+/// Multiplies all of the elements by `field`
+__kernel void distribute_powers(__global FIELD* elements,
+                        FIELD field) {
+  const uint gid = get_global_id(0);
+  const FIELD pow_field = FIELD_pow(field, gid);
+  
+  elements[gid] = FIELD_mul(elements[gid], pow_field);
+}
