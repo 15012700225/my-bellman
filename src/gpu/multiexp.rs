@@ -302,7 +302,6 @@ where
         // let (cpu_exps, exps) = exps.split_at(cpu_n);
 
         let chunk_size = ((n as f64) / (num_devices as f64)).ceil() as usize;
-        info!("{:?}: multiexp chunk_size: {}", *SECTOR_ID, chunk_size);
 
         crate::multicore::THREAD_POOL.install(|| {
             use rayon::prelude::*;
@@ -310,7 +309,6 @@ where
             let mut acc = <G as CurveAffine>::Projective::zero();
 			let split = match (std::env::var("C2_ENOUGH_GPU_MEMORY").ok().and_then(|x|x.parse().ok()),self.kernels.len()) {
 				(Some(1), _) => {
-					info!("{:?}: c2 with enough GPU memory", *SECTOR_ID);
 					1
 				},
 				(_, 1) => 1,
