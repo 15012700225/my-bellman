@@ -246,7 +246,7 @@ where
             multiscalar(&scalars, &subset, nbits)
         }) // Accumulate results
         .reduce(
-            || E::G1::zero(),
+            E::G1::zero,
             |mut acc, part| {
                 acc.add_assign(&part);
                 acc

@@ -184,7 +184,7 @@ impl<E: ScalarEngine> TestConstraintSystem<E> {
         };
 
         for &(ref a, ref b, ref c, ref name) in &self.constraints {
-            write!(&mut s, "\n").unwrap();
+            writeln!(&mut s).unwrap();
 
             write!(&mut s, "{}: ", name).unwrap();
             pp(&mut s, a);
@@ -194,7 +194,7 @@ impl<E: ScalarEngine> TestConstraintSystem<E> {
             pp(&mut s, c);
         }
 
-        write!(&mut s, "\n").unwrap();
+        writeln!(&mut s).unwrap();
 
         s
     }

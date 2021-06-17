@@ -28,7 +28,7 @@ where
     E: Engine,
 {
     pub fn create(_priority: bool, gpu_index: usize) -> GPUResult<FFTKernel<E>> {
-        let devices = opencl::Device::all()?;
+        let devices = opencl::Device::all();
         if devices.is_empty() {
             return Err(GPUError::Simple("No working GPUs found!"));
         }
@@ -70,7 +70,6 @@ where
         deg: u32,
         max_deg: u32,
     ) -> GPUResult<()> {
-
         let n = 1u32 << log_n;
         let local_work_size = 1 << cmp::min(deg - 1, MAX_LOG2_LOCAL_WORK_SIZE);
         let global_work_size = (n >> deg) * local_work_size;
@@ -149,7 +148,3 @@ where
         Ok(())
     }
 }
-
-
-
-
