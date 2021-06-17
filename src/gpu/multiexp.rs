@@ -309,7 +309,10 @@ where
 
             let mut acc = <G as CurveAffine>::Projective::zero();
 			let split = match (std::env::var("C2_ENOUGH_GPU_MEMORY").ok().and_then(|x|x.parse().ok()),self.kernels.len()) {
-				(Some(1), _) => 1,
+				(Some(1), _) => {
+					info!("{:?}: c2 with enough GPU memory", *SECTOR_ID);
+					1
+				},
 				(_, 1) => 1,
 				(_, n) => n * 8,
 			};
