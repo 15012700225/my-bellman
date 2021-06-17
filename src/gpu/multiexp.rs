@@ -305,10 +305,13 @@ where
             use rayon::prelude::*;
 
             let mut acc = <G as CurveAffine>::Projective::zero();
-			let split = match self.kernels.len() {
-				1 => 1,
-				n => n * 8,
-			};
+
+		
+			let split = 1;
+			// let split = match self.kernels.len() {
+			// 	1 => 1,
+			// 	n => n * 8,
+			// };
 
             let results = if n > 0 {
                 bases

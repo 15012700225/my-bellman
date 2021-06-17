@@ -84,17 +84,17 @@ __kernel void add_by_field(__global FIELD* elements,
 /// perform add on all elements
 __kernel void merge_add(__global FIELD* elements1, __global FIELD* elements2) {
   const uint gid = get_global_id(0);
-  elements[gid] = FIELD_add(elements1[gid], elements2[gid]);
+  elements1[gid] = FIELD_add(elements1[gid], elements2[gid]);
 }
 
 /// perform sub on all elements
 __kernel void merge_sub(__global FIELD* elements1, __global FIELD* elements2) {
   const uint gid = get_global_id(0);
-  elements[gid] = FIELD_sub(elements1[gid], elements2[gid]);
+  elements1[gid] = FIELD_sub(elements1[gid], elements2[gid]);
 }
 
 /// perform mul for all elements
 __kernel void merge_mul(__global FIELD* elements1, __global FIELD* elements2) {
   const uint gid = get_global_id(0);
-  elements[gid] = FIELD_mul(elements1[gid], elements2[gid]);
+  elements1[gid] = FIELD_mul(elements1[gid], elements2[gid]);
 }

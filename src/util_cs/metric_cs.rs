@@ -66,7 +66,7 @@ fn proc_lc<E: ScalarEngine>(terms: &LinearCombination<E>) -> BTreeMap<OrderedVar
     let mut to_remove = vec![];
     for (var, coeff) in map.iter() {
         if coeff.is_zero() {
-            to_remove.push(var.clone())
+            to_remove.push(*var)
         }
     }
 
