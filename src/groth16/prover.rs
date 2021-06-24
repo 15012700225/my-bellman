@@ -250,6 +250,7 @@ pub fn create_random_proof_batch_priority<E, C, R, P: ParameterSource<E>>(
     params: P,
     rng: &mut R,
     priority: bool,
+    gpu_index: usize,
 ) -> Result<Vec<Proof<E>>, SynthesisError>
 where
     E: Engine,
@@ -259,7 +260,7 @@ where
     let r_s = (0..circuits.len()).map(|_| E::Fr::random(rng)).collect();
     let s_s = (0..circuits.len()).map(|_| E::Fr::random(rng)).collect();
 
-    create_proof_batch_priority::<E, C, P>(circuits, params, r_s, s_s, priority)
+    create_proof_batch_priority::<E, C, P>(circuits, params, r_s, s_s, priority, gpu_index)
 }
 
 pub fn create_proof_batch_priority<E, C, P: ParameterSource<E>>(
@@ -268,6 +269,7 @@ pub fn create_proof_batch_priority<E, C, P: ParameterSource<E>>(
     r_s: Vec<E::Fr>,
     s_s: Vec<E::Fr>,
     priority: bool,
+    gpu_index: usize,
 ) -> Result<Vec<Proof<E>>, SynthesisError>
 where
     E: Engine,
@@ -310,7 +312,7 @@ where
         None
     };
 
-    let mut fft_kern = Some(LockedFFTKernel::<E>::new(log_d, priority));
+    let mut fft_kern = Some(LockedFFTKernel::<E>::new(log_d, priority, gpu_index));
 
     let a_s = provers
         .iter_mut()
@@ -346,7 +348,7 @@ where
         .collect::<Result<Vec<_>, SynthesisError>>()?;
 
     drop(fft_kern);
-    let mut multiexp_kern = Some(LockedMultiexpKernel::<E>::new(log_d, priority));
+    let mut multiexp_kern = Some(LockedMultiexpKernel::<E>::new(log_d, priority, gpu_index));
 
     let h_s = a_s
         .into_iter()

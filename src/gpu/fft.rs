@@ -27,7 +27,7 @@ impl<E> FFTKernel<E>
 where
     E: Engine,
 {
-    pub fn create(priority: bool) -> GPUResult<FFTKernel<E>> {
+    pub fn create(priority: bool, gpu_index: usize) -> GPUResult<FFTKernel<E>> {
         let lock = locks::GPULock::lock();
 
         let devices = opencl::Device::all();
@@ -36,7 +36,10 @@ where
         }
 
         // Select the first device for FFT
-        let device = devices[0].clone();
+        let &device = devices
+            .get(gpu_index)
+            .ok_or_else(|| GPUError::Custom(format!("cannot take gpu at index: {}", gpu_index)))?;
+        let device = device.clone();
 
         let src = sources::kernel::<E>(device.brand() == opencl::Brand::Nvidia);
 
