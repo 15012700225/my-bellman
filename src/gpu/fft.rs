@@ -5,6 +5,7 @@ use crate::gpu::{
 };
 use ff::Field;
 use log::info;
+use rust_gpu_tools::opencl::Buffer;
 use rust_gpu_tools::*;
 use std::cmp;
 
@@ -62,7 +63,7 @@ where
     /// * `deg` - 1=>radix2, 2=>radix4, 3=>radix8, ...
     /// * `max_deg` - The precalculated values pq` and `omegas` are valid for radix degrees up to `max_deg`
     fn radix_fft_round(
-        &mut self,
+        &self,
         src_buffer: &opencl::Buffer<E::Fr>,
         dst_buffer: &opencl::Buffer<E::Fr>,
         log_n: u32,
@@ -119,6 +120,110 @@ where
         }
         self.omegas_buffer.write_from(0, &omegas)?;
 
+        Ok(())
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn full_fft(
+        &mut self,
+        a: &mut [E::Fr],
+        b: &mut [E::Fr],
+        c: &[E::Fr],
+        omega: &E::Fr,
+        log_n: u32,
+        minv: &E::Fr,
+        gen: &E::Fr,
+    ) -> GPUResult<()> {
+        let n = 1 << log_n;
+        let mut a_buffer = self.program.create_buffer::<E::Fr>(n)?;
+        let mut b_buffer = self.program.create_buffer::<E::Fr>(n)?;
+        let mut c_buffer = self.program.create_buffer::<E::Fr>(n)?;
+        let mut tmp_buffer = self.program.create_buffer::<E::Fr>(n)?;
+        let max_deg = cmp::min(MAX_LOG2_RADIX, log_n);
+        self.setup_pq_omegas(omega, n, max_deg)?;
+
+        a_buffer.write_from(0, &*a)?;
+        b_buffer.write_from(0, &*b)?;
+        c_buffer.write_from(0, &*c)?;
+
+        self.fft_icos_batch(&mut a_buffer, &mut tmp_buffer, log_n, max_deg, minv, gen)?;
+        self.fft_icos_batch(&mut b_buffer, &mut tmp_buffer, log_n, max_deg, minv, gen)?;
+        self.fft_icos_batch(&mut c_buffer, &mut tmp_buffer, log_n, max_deg, minv, gen)?;
+
+        self.merge_abc(&a_buffer, &b_buffer, &c_buffer)?;
+        drop(b_buffer);
+        drop(c_buffer);
+
+        Ok(())
+    }
+
+    fn merge_abc(&self, a: &Buffer<E::Fr>, b: &Buffer<E::Fr>, c: &Buffer<E::Fr>) -> GPUResult<()> {
+        let global_work_size = a.length();
+        let kernel = self
+            .program
+            .create_kernel("merge_mul", global_work_size as usize, None);
+
+        call_kernel!(kernel, a, b)?;
+
+        let kernel = self
+            .program
+            .create_kernel("merge_sub", global_work_size as usize, None);
+
+        call_kernel!(kernel, a, c)?;
+
+        Ok(())
+    }
+
+    fn fft_icos_batch(
+        &self,
+        buf: &mut Buffer<E::Fr>,
+        tmp_buf: &mut Buffer<E::Fr>,
+        log_n: u32,
+        max_deg: u32,
+        minv: &E::Fr,
+        gen: &E::Fr,
+    ) -> GPUResult<()> {
+        let mut log_p = 0u32;
+        while log_p < log_n {
+            let deg = cmp::min(max_deg, log_n - log_p);
+            self.radix_fft_round(&buf, &tmp_buf, log_n, log_p, deg, max_deg)?;
+            log_p += deg;
+            std::mem::swap(buf, tmp_buf);
+        }
+        self.minv_multiplication(buf, minv)?;
+
+        self.distribute_power(&buf, gen)?;
+        let mut log_p = 0u32;
+        // ifft for buffer_a
+        while log_p < log_n {
+            let deg = cmp::min(max_deg, log_n - log_p);
+            self.radix_fft_round(&buf, &tmp_buf, log_n, log_p, deg, max_deg)?;
+            log_p += deg;
+            std::mem::swap(buf, tmp_buf);
+        }
+        Ok(())
+    }
+
+    fn distribute_power(&self, buffer: &Buffer<E::Fr>, gen: &E::Fr) -> GPUResult<()> {
+        let global_work_size = buffer.length();
+        let kernel =
+            self.program
+                .create_kernel("distribute_powers", global_work_size as usize, None);
+
+        let mut gen_buf = self.program.create_buffer(1)?;
+        gen_buf.write_from(0, std::slice::from_ref(gen))?;
+        call_kernel!(kernel, buffer, &gen_buf)?;
+        Ok(())
+    }
+
+    fn minv_multiplication(&self, buffer: &Buffer<E::Fr>, minv: &E::Fr) -> GPUResult<()> {
+        let global_work_size = buffer.length();
+        let kernel = self
+            .program
+            .create_kernel("mul_by_field", global_work_size as usize, None);
+        let mut minv_buf = self.program.create_buffer(1)?;
+        minv_buf.write_from(0, std::slice::from_ref(minv))?;
+        call_kernel!(kernel, buffer, &minv_buf)?;
         Ok(())
     }
 

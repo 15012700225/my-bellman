@@ -67,18 +67,16 @@ __kernel void radix_fft(__global FIELD* x, // Source buffer
   }
 }
 
-__kernel void mul_by_field(__global FIELD* elements,
-                        uint n,
-                        FIELD field) {
+__kernel void mul_by_field(__global FIELD* elements, __global FIELD* field) {
   const uint gid = get_global_id(0);
-  elements[gid] = FIELD_mul(elements[gid], field);
+  elements[gid] = FIELD_mul(elements[gid], field[0]);
 }
 
 /// Multiplies all of the elements by `field`
 __kernel void distribute_powers(__global FIELD* elements,
-                        FIELD field) {
+                        __global FIELD* field) {
   const uint gid = get_global_id(0);
-  const FIELD pow_field = FIELD_pow(field, gid);
+  const FIELD pow_field = FIELD_pow(field[0], gid);
   
   elements[gid] = FIELD_mul(elements[gid], pow_field);
 }
