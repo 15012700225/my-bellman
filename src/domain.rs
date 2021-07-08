@@ -394,7 +394,7 @@ pub fn gpu_fft<E: Engine, T: Group<E>>(
     kern.radix_fft(a, omega, log_n)?;
     Ok(())
 }
-
+#[allow(clippy::many_single_char_names)]
 pub fn serial_fft<E: ScalarEngine, T: Group<E>>(a: &mut [T], omega: &E::Fr, log_n: u32) {
     fn bitreverse(mut n: u32, l: u32) -> u32 {
         let mut r = 0;
