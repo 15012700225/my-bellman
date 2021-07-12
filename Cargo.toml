@@ -15,6 +15,7 @@ edition = "2018"
 
 [dependencies]
 crossbeam = "*"
+backtrace = "*"
 bit-vec = "0.6"
 blake2s_simd = "0.5"
 ff = { version = "0.2.0", package = "fff" }
