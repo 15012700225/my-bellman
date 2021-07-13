@@ -1,7 +1,6 @@
 use crate::bls::{Engine, PairingCurveAffine};
 use ff::{Field, PrimeField};
 use groupy::{CurveAffine, CurveProjective};
-use log::info;
 use rayon::prelude::*;
 
 use super::{multiscalar, PreparedVerifyingKey, Proof, VerifyingKey};
@@ -108,13 +107,6 @@ pub fn verify_proofs_batch<'a, E: Engine, R: rand::RngCore>(
 where
     <<E as ff::ScalarEngine>::Fr as ff::PrimeField>::Repr: From<<E as ff::ScalarEngine>::Fr>,
 {
-    std::panic::set_hook(Box::new(move |_| {
-        let bt = backtrace::Backtrace::new();
-        info!(
-            "{} panic occured, backtrace: {:?}",
-            "verify_proofs_batch", bt
-        );
-    }));
 
     debug_assert_eq!(proofs.len(), public_inputs.len());
 
