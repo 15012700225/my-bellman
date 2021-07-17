@@ -253,6 +253,8 @@ impl<G: CurveProjective> Group<G::Engine> for Point<G> {
     }
 }
 
+#[repr(transparent)]
+#[derive(Debug)]
 pub struct Scalar<E: ScalarEngine>(pub E::Fr);
 
 impl<E: ScalarEngine> PartialEq for Scalar<E> {
