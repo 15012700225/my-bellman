@@ -158,6 +158,8 @@ use std::marker::PhantomData;
 use std::ops::{Add, Sub};
 
 const BELLMAN_VERSION: &str = env!("CARGO_PKG_VERSION");
+pub const GIT_VERSION: &str =
+    git_version::git_version!(args = ["--abbrev=40", "--always", "--dirty=-modified"]);
 
 /// Computations are expressed in terms of arithmetic circuits, in particular
 /// rank-1 quadratic constraint systems. The `Circuit` trait represents a
