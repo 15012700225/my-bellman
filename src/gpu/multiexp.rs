@@ -302,7 +302,6 @@ where
         // let (cpu_exps, exps) = exps.split_at(cpu_n);
 
         let chunk_size = ((n as f64) / (num_devices as f64)).ceil() as usize;
-        info!("{:?}: multiexp chunk_size: {}", *SECTOR_ID, chunk_size);
 
         crate::multicore::THREAD_POOL.install(|| {
             use rayon::prelude::*;
