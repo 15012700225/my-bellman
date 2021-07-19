@@ -240,10 +240,9 @@ where
             return Err(GPUError::Simple("No working GPUs found!"));
         }
         info!(
-            "{:?}: Multiexp: {} working device(s) selected. (CPU utilization: {})",
+            "{:?}: Multiexp: {} working device(s) selected.",
             *SECTOR_ID,
             kernels.len(),
-            get_cpu_utilization()
         );
         for (i, k) in kernels.iter().enumerate() {
             info!(
