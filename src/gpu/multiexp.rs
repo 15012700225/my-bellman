@@ -16,24 +16,6 @@ const MAX_WINDOW_SIZE: usize = 10;
 const LOCAL_WORK_SIZE: usize = 256;
 const MEMORY_PADDING: f64 = 0.2f64; // Let 20% of GPU memory be free
 
-pub fn get_cpu_utilization() -> f64 {
-    use std::env;
-    env::var("BELLMAN_CPU_UTILIZATION")
-        .and_then(|v| match v.parse() {
-            Ok(val) => Ok(val),
-            Err(_) => {
-                error!(
-                    "{:?}: Invalid BELLMAN_CPU_UTILIZATION! Defaulting to 0...",
-                    *SECTOR_ID
-                );
-                Ok(0f64)
-            }
-        })
-        .unwrap_or(0f64)
-        .max(0f64)
-        .min(1f64)
-}
-
 // Multiexp kernel for a single GPU
 pub struct SingleMultiexpKernel<E>
 where
@@ -296,17 +278,11 @@ where
         let bases = &bases[skip..(skip + n)];
         let exps = &exps[..n];
 
-        // let cpu_n = 0;
-        // let n = n - cpu_n;
-        // let (cpu_bases, bases) = bases.split_at(0);
-        // let (cpu_exps, exps) = exps.split_at(cpu_n);
-
         let chunk_size = ((n as f64) / (num_devices as f64)).ceil() as usize;
 
         crate::multicore::THREAD_POOL.install(|| {
             use rayon::prelude::*;
 
-			info!("{:?}: start thread_pool ", *SECTOR_ID);
             let mut acc = <G as CurveAffine>::Projective::zero();
 
             let results = if n > 0 {
@@ -328,23 +304,10 @@ where
                 Vec::new()
             };
 
-			info!("{:?}: end thread_pool ", *SECTOR_ID);
-
-            // let cpu_acc = cpu_multiexp(
-            //     &pool,
-            //     (Arc::new(cpu_bases.to_vec()), 0),
-            //     FullDensity,
-            //     Arc::new(cpu_exps.to_vec()),
-            //     &mut None,
-            // );
-
-			info!("{:?}: debuglog {}", *SECTOR_ID, line!());
             for r in results {
                 acc.add_assign(&r?);
             }
 
-			// info!("{:?}: debuglog {}", *SECTOR_ID, line!());
-            // acc.add_assign(&cpu_acc.wait().unwrap());
             Ok(acc)
         })
     }
