@@ -327,11 +327,12 @@ pub fn gpu_fft<E: Engine, T: Group<E>>(
     // size.
     // For compatibility/performance reasons we decided to transmute the array to the desired type
     // as it seems safe and needs less modifications in the current structure of Bellman library.
-    let a = unsafe { std::mem::transmute::<&mut [T], &mut [E::Fr]>(a) };
+    let a = unsafe { &mut *(a as *mut [T] as *mut [<E as ff::ScalarEngine>::Fr]) };
     kern.radix_fft(a, omega, log_n)?;
     Ok(())
 }
 
+#[allow(clippy::many_single_char_names)]
 pub fn serial_fft<E: ScalarEngine, T: Group<E>>(a: &mut [T], omega: &E::Fr, log_n: u32) {
     fn bitreverse(mut n: u32, l: u32) -> u32 {
         let mut r = 0;
@@ -602,7 +603,7 @@ mod tests {
 
         let worker = Worker::new();
         let log_cpus = worker.log_num_cpus();
-        let mut kern = gpu::FFTKernel::create(false).expect("Cannot initialize kernel!");
+        let mut kern = gpu::FFTKernel::create(false, 0).expect("Cannot initialize kernel!");
 
         for log_d in 1..25 {
             let d = 1 << log_d;
