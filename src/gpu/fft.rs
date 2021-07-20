@@ -24,8 +24,6 @@ where
     priority: bool,
 }
 
-
-
 impl<E> FFTKernel<E>
 where
     E: Engine,
@@ -130,7 +128,6 @@ where
         Ok(())
     }
 
-
     /// Performs FFT on `a`
     /// * `omega` - Special value `omega` is used for FFT over finite-fields
     /// * `log_n` - Specifies log2 of number of elements
@@ -142,7 +139,9 @@ where
         let max_deg = cmp::min(MAX_LOG2_RADIX, log_n);
         self.setup_pq_omegas(omega, n, max_deg)?;
 
+        let tmp = std::time::Instant::now();
         src_buffer.write_from(0, &*a)?;
+        info!("GPU buffer write_from: {:?}", tmp.elapsed());
 
         let mut log_p = 0u32;
         while log_p < log_n {
@@ -152,7 +151,9 @@ where
             std::mem::swap(&mut src_buffer, &mut dst_buffer);
         }
 
+        let tmp = std::time::Instant::now();
         src_buffer.read_into(0, a)?;
+        info!("GPU buffer read_into: {:?}", tmp.elapsed());
 
         Ok(())
     }
