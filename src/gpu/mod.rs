@@ -24,6 +24,9 @@ pub use self::utils::*;
 mod fft;
 
 #[cfg(feature = "gpu")]
+pub mod blsfft;
+
+#[cfg(feature = "gpu")]
 pub use self::fft::*;
 
 #[cfg(feature = "gpu")]

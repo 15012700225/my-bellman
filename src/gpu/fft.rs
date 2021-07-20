@@ -8,9 +8,9 @@ use log::info;
 use rust_gpu_tools::*;
 use std::cmp;
 
-const LOG2_MAX_ELEMENTS: usize = 32; // At most 2^32 elements is supported.
-const MAX_LOG2_RADIX: u32 = 8; // Radix256
-const MAX_LOG2_LOCAL_WORK_SIZE: u32 = 7; // 128
+pub(crate) const LOG2_MAX_ELEMENTS: usize = 32; // At most 2^32 elements is supported.
+pub(crate) const MAX_LOG2_RADIX: u32 = 8; // Radix256
+pub(crate) const MAX_LOG2_LOCAL_WORK_SIZE: u32 = 7; // 128
 
 use crate::sector_id::SECTOR_ID;
 
@@ -23,6 +23,8 @@ where
     omegas_buffer: opencl::Buffer<E::Fr>,
     priority: bool,
 }
+
+
 
 impl<E> FFTKernel<E>
 where
@@ -127,6 +129,7 @@ where
 
         Ok(())
     }
+
 
     /// Performs FFT on `a`
     /// * `omega` - Special value `omega` is used for FFT over finite-fields
