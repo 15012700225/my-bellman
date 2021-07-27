@@ -139,7 +139,11 @@ where
         let max_deg = cmp::min(MAX_LOG2_RADIX, log_n);
         self.setup_pq_omegas(omega, n, max_deg)?;
 
-        src_buffer.write_from(0, &*a)?;
+        {
+            let t = std::time::Instant::now();
+            src_buffer.write_from(0, &*a)?;
+            info!("{:?}: GPU write buffer: {:?}", *SECTOR_ID, t.elapsed());
+        }
 
         let mut log_p = 0u32;
         while log_p < log_n {
@@ -149,7 +153,11 @@ where
             std::mem::swap(&mut src_buffer, &mut dst_buffer);
         }
 
-        src_buffer.read_into(0, a)?;
+        {
+            let t = std::time::Instant::now();
+            src_buffer.read_into(0, a)?;
+            info!("{:?}: GPU read buffer: {:?}", *SECTOR_ID, t.elapsed());
+        }
 
         Ok(())
     }
