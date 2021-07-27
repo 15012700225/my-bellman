@@ -24,6 +24,7 @@ lazy_static::lazy_static! {
             ("Quadro M5000".to_string(), 2048),
 
             ("GeForce RTX 3090".to_string(), 10496),
+            ("NVIDIA GeForce RTX 3080".to_string(), 8704),
             ("GeForce RTX 3080".to_string(), 8704),
             ("GeForce RTX 3070".to_string(), 5888),
 
